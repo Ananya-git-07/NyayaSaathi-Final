@@ -1,0 +1,35 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "adminPanel": "Admin Panel",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "loginPage": {
+    "title": "Welcome Back!",
+    "subtitle": "Sign in to continue to NyayaSaathi.",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
+    "signInButton": "Sign In",
+    "signingInButton": "Signing In...",
+    "noAccount": "Don't have an account?",
+    "signUpLink": "Sign up"
+  },
+  "dashboardPage": {
+    "title": "Your Dashboard",
+    "voiceCommandButton": "Start Voice Command",
+    "issuesTitle": "My Legal Issues",
+    "issuesEmpty": "No legal issues found. Use the Voice Command button to create one.",
+    "documentsTitle": "My Documents",
+    "documentsEmpty": "No documents found. Use the Voice Command button to add one."
+  },
+  "publicHero": {
+    "title": "Welcome to <span class='text-cyan-400'>NyayaSaathi</span>",
+    "subtitle": "Your trusted digital partner for legal guidance and support. We make legal help as easy as talking to a friend.",
+    "getStarted": "Get Started",
+    "login": "Login"
+  }
+}

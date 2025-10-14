@@ -1,0 +1,157 @@
+/* Import Tailwind's core styles and utilities */
+@import "tailwindcss";
+
+/* Define custom theme values using @theme */
+@theme {
+  --animation-blob: blob 7s infinite;
+  --animation-float: float 6s ease-in-out infinite;
+  --animation-pulse-slow: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  @keyframes pulse-slow {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+}
+
+/* Base styles */
+body {
+  @apply bg-white text-slate-800 antialiased;
+  background-image: radial-gradient(at 40% 20%, rgba(198, 198, 255, 0.2) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(198, 198, 255, 0.2) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(198, 198, 255, 0.2) 0px, transparent 50%);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-200;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-400 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-500;
+}
+
+/* Selection */
+::selection {
+  @apply bg-cyan-200 text-slate-800;
+}
+
+/* Enhanced utility classes - Light theme version */
+@utility input-style {
+  @apply w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300 shadow-sm;
+}
+
+@utility btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-transparent rounded-lg shadow text-sm font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-cyan-300/25;
+}
+
+@utility btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-300 rounded-lg shadow text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md;
+}
+
+@utility glass-card {
+  @apply bg-white/70 backdrop-blur-md border border-slate-200 rounded-xl shadow-lg;
+}
+
+@utility glass-card-hover {
+  @apply glass-card hover:bg-white/80 hover:border-slate-300 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
+}
+
+@layer components {
+  .input-style {
+    @apply w-full px-4 py-3 bg-white border border-slate-300 rounded-lg text-slate-800 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300 shadow-sm;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-transparent rounded-lg shadow text-sm font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-cyan-300/25;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-300 rounded-lg shadow text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-md;
+  }
+
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-md border border-slate-200 rounded-xl shadow-lg;
+  }
+
+  .glass-card-hover {
+    @apply glass-card hover:bg-white/80 hover:border-slate-300 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent;
+  }
+
+  .section-padding {
+    @apply py-16 sm:py-24 lg:py-32;
+  }
+
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .card-light {
+    @apply bg-white border border-slate-200 rounded-xl shadow-md hover:shadow-lg transition-all duration-300;
+  }
+
+  .text-primary {
+    @apply text-slate-900;
+  }
+
+  .text-secondary {
+    @apply text-slate-700;
+  }
+
+  .text-muted {
+    @apply text-slate-600;
+  }
+
+  .bg-primary {
+    @apply bg-white;
+  }
+
+  .bg-secondary {
+    @apply bg-slate-50;
+  }
+
+  .border-light {
+    @apply border-slate-200;
+  }
+}

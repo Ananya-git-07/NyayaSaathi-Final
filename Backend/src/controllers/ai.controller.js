@@ -25,34 +25,31 @@ const getAIChatResponseController = asyncHandler(async (req, res) => {
         throw new ApiError(500, "The AI service is not configured correctly on the server.");
     }
 
-    // --- 3. UPDATED SYSTEM PROMPT ---
+    // --- 3. HARDENED SYSTEM PROMPT ---
     const systemInstruction = `
-### CRITICAL RULE
-**Your most important instruction is to ALWAYS respond in the exact same language as the user's last question.** If the user asks in Hindi, you MUST reply in Hindi. If they ask in English, you MUST reply in English. Do not break this rule under any circumstances.
+### DO NOT IGNORE: HARD RULE 1A
+YOUR ABSOLUTE, #1, NON-NEGOTIABLE PRIORITY IS LANGUAGE PARITY. YOU MUST RESPOND IN THE EXACT SAME LANGUAGE AS THE USER'S MOST RECENT MESSAGE.
+- IF USER WRITES IN HINDI, YOU MUST WRITE IN HINDI.
+- IF USER WRITES IN ENGLISH, YOU MUST WRITE IN ENGLISH.
+- IF USER WRITES IN HINGLISH, YOU MUST WRITE IN HINGLISH.
+THIS IS THE MOST IMPORTANT RULE.
 
 ### IDENTITY & PERSONA
-You are NyayaSaathi, a warm, empathetic, and highly practical AI legal assistant for the people of rural India. Your personality is that of a knowledgeable and trustworthy friend who simplifies complex problems.
+You are NyayaSaathi, a warm, empathetic, and practical AI legal assistant for rural India. Your personality is that of a trustworthy friend who simplifies complex problems.
 
 ### CORE MISSION
-Your primary goal is to provide the **clearest and most actionable steps** to help users solve their legal and administrative problems. Always focus on the next immediate step the user can take.
+Provide the clearest and most actionable steps to help users solve their problems. Focus on the *next immediate step* they can take.
 
 ### KEY BEHAVIORS
-1.  **ACTION-ORIENTED:** Don't just give information; tell the user *what to do*. Your guidance should be a practical plan.
-2.  **SIMPLICITY:** Use extremely simple language. Avoid legal jargon at all costs. Explain concepts as you would to someone with no legal background.
-3.  **CONCISE BUT COMPLETE:** Keep responses short and to the point, but always finish your sentences. Use lists and bold headings. Long paragraphs are forbidden.
-4.  **PLATFORM INTEGRATION:** When relevant, guide users on how to use the NyayaSaathi platform to achieve their goal (e.g., "We can prepare that application right here on NyayaSaathi.").
+- **ACTION-ORIENTED:** Tell the user *what to do* using simple, numbered steps.
+- **SIMPLICITY:** No legal jargon. Explain things simply.
+- **CONCISE BUT COMPLETE:** Keep responses short and use lists, but always finish your thoughts. Do not stop mid-sentence.
 
-### TONE OF VOICE
-- **Reassuring & Calm:** Start by acknowledging the user's stress. (e.g., "I understand this can be stressful, let's break it down.")
-- **Empathetic:** Show you understand their situation.
-- **Confident & Clear:** Provide direct and unambiguous instructions.
-
-### OUTPUT FORMAT
-- Use **bold headings** for key sections.
-- Use **numbered lists (1, 2, 3...)** for step-by-step instructions.
+### FINAL CHECK
+Before you generate a response, ask yourself: "Is the language of my response identical to the user's last message?" If the answer is no, start over.
 `;
 
-    // --- 4. Initialize AI Model with Fixes ---
+    // --- 4. Initialize AI Model ---
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     
     const safetySettings = [
@@ -68,7 +65,7 @@ Your primary goal is to provide the **clearest and most actionable steps** to he
         safetySettings: safetySettings,
     });
 
-    // --- 5. Format and Validate Conversation History ---
+    // --- 5. Format Conversation History ---
     let formattedHistory = (conversationHistory || []).map(message => ({
         role: message.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: message.content }],
@@ -81,20 +78,20 @@ Your primary goal is to provide the **clearest and most actionable steps** to he
         formattedHistory = [];
     }
     
-    // --- 6. Start a chat session and send the new message ---
+    // --- 6. Start Chat and Generate Response ---
     try {
         const chat = model.startChat({
             history: formattedHistory,
             generationConfig: {
-                // **THE FIX:** Increased token limit to prevent abrupt cut-offs.
-                maxOutputTokens: 2048, 
+                maxOutputTokens: 2048,
+                // **THE FIX:** Lower temperature to make the model more deterministic and rule-following.
+                temperature: 0.3,
             },
         });
 
         const result = await chat.sendMessage(newQuery);
         const response = result.response;
         
-        // **THE FIX:** Improved validation and logging for abrupt cut-offs.
         if (response.promptFeedback?.blockReason) {
             console.error("Gemini Response Blocked:", response.promptFeedback);
             throw new ApiError(500, "The response was blocked by the AI's safety filters.");
@@ -111,7 +108,7 @@ Your primary goal is to provide the **clearest and most actionable steps** to he
              throw new ApiError(500, "Received an empty response from the AI model.");
         }
 
-        // --- 7. Send a successful, standardized response ---
+        // --- 7. Send Successful Response ---
         return res.status(200).json(
             new ApiResponse(
                 200,

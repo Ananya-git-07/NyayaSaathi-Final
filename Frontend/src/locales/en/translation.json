@@ -6,7 +6,8 @@
     "adminPanel": "Admin Panel",
     "logout": "Logout",
     "login": "Login",
-    "register": "Register"
+    "register": "Register",
+    "legalHelp": "Legal Help"
   },
   "loginPage": {
     "title": "Welcome Back!",
@@ -18,18 +19,143 @@
     "noAccount": "Don't have an account?",
     "signUpLink": "Sign up"
   },
+  "registerPage": {
+    "title": "Create an Account",
+    "subtitle": "Join our mission to make justice accessible for all.",
+    "joinTitle": "Join NyayaSaathi",
+    "joinSubtitle": "Empowering every citizen with accessible and fair legal justice.",
+    "selectRole": "Select Your Role",
+    "roles": {
+      "citizen": "Citizen",
+      "employee": "Employee",
+      "paralegal": "Paralegal",
+      "admin": "Admin"
+    },
+    "roleDescriptions": {
+      "citizen": "Access legal help and manage your issues",
+      "employee": "Help citizens with legal processes at kiosks",
+      "paralegal": "Provide legal guidance and support",
+      "admin": "Manage system and oversee operations"
+    },
+    "credentialsTitle": "Account Credentials",
+    "fullNameLabel": "Full Name *",
+    "fullNamePlaceholder": "Enter your full name",
+    "emailLabel": "Email Address *",
+    "emailPlaceholder": "your@email.com",
+    "passwordLabel": "Password *",
+    "passwordPlaceholder": "Min 6 characters",
+    "aadhaarLabel": "Aadhaar Number *",
+    "aadhaarPlaceholder": "12-digit Aadhaar number",
+    "aadhaarError": "Must be 12 digits",
+    "employeeInfoTitle": "Employee Information",
+    "kioskLabel": "Kiosk Assignment *",
+    "kioskSearchPlaceholder": "Search by location, village, or district...",
+    "kioskSelectDefault": "Select a kiosk",
+    "kioskLoading": "Loading kiosks...",
+    "kioskError": "Error loading kiosks",
+    "kioskNone": "No kiosks available",
+    "kioskRetry": "Retry",
+    "departmentLabel": "Department *",
+    "departmentPlaceholder": "Legal Helpdesk",
+    "designationLabel": "Designation *",
+    "designationPlaceholder": "Field Officer",
+    "roleLevelLabel": "Role Level *",
+    "roleLevels": {
+      "staff": "Staff",
+      "manager": "Manager"
+    },
+    "roleLevelDescriptions": {
+      "staff": "Regular employee",
+      "manager": "Team leader"
+    },
+    "paralegalInfoTitle": "Paralegal Information",
+    "phoneLabel": "Phone Number *",
+    "phonePlaceholder": "9876543210",
+    "phoneError": "Must be 10 digits",
+    "expertiseLabel": "Areas of Expertise *",
+    "expertiseAreas": {
+      "aadhaar": "Aadhaar",
+      "pension": "Pension",
+      "land": "Land",
+      "certificates": "Certificates",
+      "fraud": "Fraud",
+      "court": "Court",
+      "welfare": "Welfare"
+    },
+    "expertiseHint": "Select at least one area of expertise.",
+    "submitButton": "Create Account",
+    "submittingButton": "Creating Account...",
+    "alreadyAccount": "Already have an account?",
+    "signInLink": "Sign in"
+  },
   "dashboardPage": {
-    "title": "Your Dashboard",
-    "voiceCommandButton": "Start Voice Command",
+    "welcome": "Welcome back, {{name}}!",
+    "subtitle": "Manage your legal issues and documents.",
+    "activeIssues": "Active Issues",
+    "totalDocuments": "Total Documents",
+    "resolvedIssues": "Resolved Issues",
     "issuesTitle": "My Legal Issues",
-    "issuesEmpty": "No legal issues found. Use the Voice Command button to create one.",
+    "addIssue": "Add Issue",
+    "viewDetails": "View Details",
+    "noIssuesTitle": "No legal issues found",
+    "noIssuesSubtitle": "Click \"Add Issue\" to create your first one.",
     "documentsTitle": "My Documents",
-    "documentsEmpty": "No documents found. Use the Voice Command button to add one."
+    "addDocument": "Add Document",
+    "openFile": "Open File",
+    "noDocumentsTitle": "No documents found",
+    "noDocumentsSubtitle": "Click \"Add Document\" to upload your first one."
   },
   "publicHero": {
     "title": "Welcome to <span class='text-cyan-400'>NyayaSaathi</span>",
     "subtitle": "Your trusted digital partner for legal guidance and support. We make legal help as easy as talking to a friend.",
     "getStarted": "Get Started",
-    "login": "Login"
+    "login": "Login",
+    "aiAssistant": "AI-Powered Legal Assistant",
+    "secure": "Secure & Private",
+    "trusted": "Trusted by Thousands",
+    "aiPowered": "AI-Powered"
+  },
+  "legalHelpPage": {
+    "title": "AI Legal Assistant",
+    "subtitle": "Your 24/7 partner for legal guidance powered by AI.",
+    "welcome": "Welcome to the NyayaSaathi Legal Assistant! How can I help you today? You can ask me about Aadhaar, Land Disputes, Pension Schemes, and more.",
+    "placeholder": "Ask your legal question...",
+    "suggestionTitle": "Or try one of these suggestions:",
+    "suggestions": {
+      "q1": "How do I update my address on my Aadhaar card?",
+      "q2": "What are the steps to resolve a land dispute?",
+      "q3": "Tell me about the widow pension scheme.",
+      "q4": "What should I do if I receive a court summons?"
+    },
+    "thinking": "Thinking..."
+  },
+  "footer": {
+    "quickLinks": "Quick Links",
+    "contact": "Contact",
+    "tagline": "© 2024 NyayaSaathi. All rights reserved. | Government of India Initiative",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "accessibility": "Accessibility"
+  },
+  "docSummarizer": {
+    "title": "Document Summarizer",
+    "subtitle": "Make legal documents easier to understand",
+    "uploadTitle": "Upload Document",
+    "uploadPrompt": "Upload PDF or image file",
+    "chooseFile": "Choose File",
+    "selected": "Selected:",
+    "orPaste": "Or paste text",
+    "pastePlaceholder": "Paste your text here...",
+    "processing": "Processing...",
+    "generateSummary": "Generate Summary",
+    "summaryTitle": "Summary",
+    "keyPointsTitle": "Key Points",
+    "downloadSummary": "Download Summary",
+    "summaryPlaceholder": "Summary will appear here",
+    "toastFileSuccess": "File uploaded successfully",
+    "toastFileError": "Only PDF and image files are accepted",
+    "toastInputError": "Please upload a file or enter text",
+    "toastSummarySuccess": "Document summary generated",
+    "toastSummaryError": "Error generating summary"
   }
 }

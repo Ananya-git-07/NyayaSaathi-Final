@@ -28,7 +28,7 @@ const Footer = () => {
 
             {/* Quick Links */}
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">{t("quickLinks")}</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">{t("footer.quickLinks")}</h3>
               <ul className="space-y-2">
                 <li>
                   <Link to="/" className="text-slate-600 hover:text-cyan-600 transition-colors">
@@ -37,7 +37,7 @@ const Footer = () => {
                 </li>
                 <li>
                   <Link to="/legal-help" className="text-slate-600 hover:text-cyan-600 transition-colors">
-                    Legal Help
+                    {t("nav.legalHelp")}
                   </Link>
                 </li>
                 <li>
@@ -55,7 +55,7 @@ const Footer = () => {
 
             {/* Contact Info */}
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">{t("contact")}</h3>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">{t("footer.contact")}</h3>
               <ul className="space-y-3">
                 <li className="flex items-center gap-3 text-slate-600">
                   <Mail size={16} />
@@ -78,17 +78,17 @@ const Footer = () => {
         <div className="py-6 border-t border-slate-200">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-slate-600 text-sm">
-              © 2024 NyayaSaathi. All rights reserved. | Government of India Initiative
+              {t("footer.tagline")}
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <Link to="/privacy" className="text-slate-600 hover:text-cyan-600 text-sm transition-colors">
-                Privacy Policy
+                {t("footer.privacy")}
               </Link>
               <Link to="/terms" className="text-slate-600 hover:text-cyan-600 text-sm transition-colors">
-                Terms of Service
+                {t("footer.terms")}
               </Link>
               <Link to="/accessibility" className="text-slate-600 hover:text-cyan-600 text-sm transition-colors">
-                Accessibility
+                {t("footer.accessibility")}
               </Link>
             </div>
           </div>

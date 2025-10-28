@@ -56,7 +56,7 @@ const AppLayout = () => {
                       {t("nav.dashboard")}
                     </NavLink>
                     <NavLink to="/legal-help" className={navLinkClass}>
-                      Legal Help
+                      {t("nav.legalHelp")}
                     </NavLink>
                     <NavLink to="/profile" className={navLinkClass}>
                       {t("nav.profile")}
@@ -120,7 +120,7 @@ const AppLayout = () => {
                       className={mobileNavLinkClass}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Legal Help
+                      {t("nav.legalHelp")}
                     </NavLink>
                     <NavLink
                       to="/profile"

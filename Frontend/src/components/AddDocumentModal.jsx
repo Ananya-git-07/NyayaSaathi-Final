@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Send, Loader2, UploadCloud, FileText, Mic } from "lucide-react"
 import toast from "react-hot-toast"
+import { useTranslation } from "react-i18next"
 import apiClient from "../api/axiosConfig"
 import { aiService } from "../services/aiService"
 
@@ -14,6 +15,7 @@ const modalVariants = {
 };
 
 const AddDocumentModal = ({ isOpen, onClose, onSuccess }) => {
+  const { t, i18n } = useTranslation()
   const [documentType, setDocumentType] = useState("")
   const [documentFile, setDocumentFile] = useState(null)
   const [fileName, setFileName] = useState("")
@@ -21,7 +23,6 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess }) => {
   const [isRecording, setIsRecording] = useState(false)
   const recognitionRef = useRef(null)
 
-  // Setup speech recognition on component mount
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window)) {
       console.warn("Speech recognition not supported in this browser.");
@@ -30,13 +31,12 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess }) => {
     const recognition = new window.webkitSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = 'en-IN'; // Set to Indian English for better accuracy
+    recognition.lang = i18n.language === 'hi' ? 'hi-IN' : 'en-IN';
 
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       const parsedData = aiService.parseFormDataFromText(transcript);
       if (parsedData.documentType) {
-        // Capitalize the first letter for better presentation
         const formattedType = parsedData.documentType.charAt(0).toUpperCase() + parsedData.documentType.slice(1);
         setDocumentType(formattedType);
         toast.success("Document type filled with your voice command.");
@@ -48,7 +48,7 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess }) => {
     recognition.onerror = (event) => toast.error(`Microphone error: ${event.error}`);
     recognition.onend = () => setIsRecording(false);
     recognitionRef.current = recognition;
-  }, []);
+  }, [i18n.language]);
 
   const handleVoiceCommand = () => {
     if (isRecording) {
@@ -66,7 +66,6 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Frontend validation for better UX
       if (file.size > 10 * 1024 * 1024) {
         return toast.error("File size must be under 10MB.");
       }
@@ -93,15 +92,13 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess }) => {
     formData.append("documentFile", documentFile);
 
     try {
-      // NOTE: Ensure your backend has a route like `/api/documents/upload`
-      // that uses multer to handle the 'documentFile' field.
       await apiClient.post("/documents/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       toast.success("Document uploaded successfully!", { id: loadingToast });
-      onSuccess(); // This will refetch the dashboard data
-      handleClose(); // Close the modal
+      onSuccess();
+      handleClose();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to upload document.", { id: loadingToast });
     } finally {
@@ -110,7 +107,6 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const handleClose = () => {
-    // Reset all states to default when closing
     setDocumentType("");
     setDocumentFile(null);
     setFileName("");
@@ -130,45 +126,45 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess }) => {
                   <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                     <FileText className="text-blue-600" size={20} />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">Upload New Document</h3>
+                  <h3 className="text-xl font-bold text-slate-900">{t("addDocModal.title")}</h3>
               </div>
               <button onClick={handleClose} className="p-2 rounded-full text-slate-500 hover:bg-slate-100"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="p-6 space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Document Type *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t("addDocModal.docTypeLabel")}</label>
                   <div className="flex items-center gap-2">
-                    <input value={documentType} onChange={(e) => setDocumentType(e.target.value)} placeholder="e.g., Aadhaar Card, Land Deed" required className="input-style flex-grow" />
+                    <input value={documentType} onChange={(e) => setDocumentType(e.target.value)} placeholder={t("addDocModal.docTypePlaceholder")} required className="input-style flex-grow" />
                     <button type="button" onClick={handleVoiceCommand} className={`p-3 rounded-lg transition-colors ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}>
                       <Mic size={20} />
                     </button>
                   </div>
-                   <p className="text-xs text-slate-500 mt-1">Say: "Document type is Aadhaar Card"</p>
+                   <p className="text-xs text-slate-500 mt-1">{t("addDocModal.voiceHint")}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Document File *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{t("addDocModal.docFileLabel")}</label>
                   <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-lg hover:border-cyan-500 transition-colors">
                     <div className="space-y-1 text-center">
                       <UploadCloud className="mx-auto h-12 w-12 text-slate-400" />
                       <div className="flex text-sm text-slate-600">
                         <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-cyan-600 hover:text-cyan-700 focus-within:outline-none">
-                          <span>Upload a file</span>
+                          <span>{t("addDocModal.uploadFile")}</span>
                           <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" />
                         </label>
-                        <p className="pl-1">or drag and drop</p>
+                        <p className="pl-1">{t("addDocModal.dragDrop")}</p>
                       </div>
-                      <p className="text-xs text-slate-500">PDF, PNG, JPG up to 10MB</p>
-                      {fileName && <p className="text-sm text-green-600 mt-2 font-medium">Selected: {fileName}</p>}
+                      <p className="text-xs text-slate-500">{t("addDocModal.fileTypes")}</p>
+                      {fileName && <p className="text-sm text-green-600 mt-2 font-medium">{t("addDocModal.selectedFile", { fileName: fileName })}</p>}
                     </div>
                   </div>
                 </div>
               </div>
               <div className="flex justify-end gap-3 p-6 bg-slate-50 border-t border-slate-200 rounded-b-xl">
-                <button type="button" onClick={handleClose} className="btn-secondary">Cancel</button>
+                <button type="button" onClick={handleClose} className="btn-secondary">{t("addDocModal.cancel")}</button>
                 <button type="submit" disabled={isSubmitting} className="btn-primary flex items-center gap-2">
                   {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
-                  {isSubmitting ? "Uploading..." : "Upload Document"}
+                  {isSubmitting ? t("addDocModal.uploading") : t("addDocModal.upload")}
                 </button>
               </div>
             </form>

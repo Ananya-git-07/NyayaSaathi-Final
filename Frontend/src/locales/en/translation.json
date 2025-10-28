@@ -115,6 +115,29 @@
     "trusted": "Trusted by Thousands",
     "aiPowered": "AI-Powered"
   },
+  "authHero": {
+    "welcome": "Welcome back,",
+    "subtitle": "Your legal journey continues here. Start a voice query for quick assistance or head to your dashboard to manage all your cases.",
+    "voiceQuery": "Start a Voice Query",
+    "goToDashboard": "Go to Full Dashboard"
+  },
+  "homePage": {
+    "quickActionsTitle": "Quick Actions for {{name}}",
+    "quickActionsSubtitle": "Manage your legal matters efficiently",
+    "viewDashboardTitle": "View Dashboard",
+    "viewDashboardDesc": "See all your legal issues, documents, and track progress",
+    "reportIssueTitle": "Report New Issue",
+    "reportIssueDesc": "Quickly report a new legal issue or problem",
+    "uploadDocTitle": "Upload Document",
+    "uploadDocDesc": "Add important documents to your legal cases",
+    "legalHelpTitle": "Legal Help",
+    "legalHelpDesc": "Get detailed information about Indian laws and procedures",
+    "getStarted": "Get Started",
+    "goToDashboard": "Go to Full Dashboard",
+    "ctaLegalHelpTitle": "Need Legal Help?",
+    "ctaLegalHelpDesc": "Get instant access to comprehensive legal information about Indian laws, procedures, and your rights. No registration required!",
+    "ctaAccessLegalHelp": "Access Legal Help"
+  },
   "legalHelpPage": {
     "title": "AI Legal Assistant",
     "subtitle": "Your 24/7 partner for legal guidance powered by AI.",
@@ -137,25 +160,167 @@
     "terms": "Terms of Service",
     "accessibility": "Accessibility"
   },
-  "docSummarizer": {
-    "title": "Document Summarizer",
-    "subtitle": "Make legal documents easier to understand",
-    "uploadTitle": "Upload Document",
-    "uploadPrompt": "Upload PDF or image file",
-    "chooseFile": "Choose File",
-    "selected": "Selected:",
-    "orPaste": "Or paste text",
-    "pastePlaceholder": "Paste your text here...",
-    "processing": "Processing...",
-    "generateSummary": "Generate Summary",
-    "summaryTitle": "Summary",
-    "keyPointsTitle": "Key Points",
-    "downloadSummary": "Download Summary",
-    "summaryPlaceholder": "Summary will appear here",
-    "toastFileSuccess": "File uploaded successfully",
-    "toastFileError": "Only PDF and image files are accepted",
-    "toastInputError": "Please upload a file or enter text",
-    "toastSummarySuccess": "Document summary generated",
-    "toastSummaryError": "Error generating summary"
+  "addIssueModal": {
+    "title": "Report a New Legal Issue",
+    "issueTypeLabel": "Issue Type *",
+    "selectPlaceholder": "Select an issue type",
+    "descriptionLabel": "Description *",
+    "descriptionPlaceholder": "Describe your issue in detail. You can also use the voice command button.",
+    "fillWithVoice": "Fill with Voice",
+    "listening": "Listening...",
+    "cancel": "Cancel",
+    "submit": "Submit Issue",
+    "submitting": "Submitting..."
+  },
+  "addDocModal": {
+    "title": "Upload New Document",
+    "docTypeLabel": "Document Type *",
+    "docTypePlaceholder": "e.g., Aadhaar Card, Land Deed",
+    "voiceHint": "Say: \"Document type is Aadhaar Card\"",
+    "docFileLabel": "Document File *",
+    "uploadFile": "Upload a file",
+    "dragDrop": "or drag and drop",
+    "fileTypes": "PDF, PNG, JPG up to 10MB",
+    "selectedFile": "Selected: {{fileName}}",
+    "cancel": "Cancel",
+    "upload": "Upload Document",
+    "uploading": "Uploading..."
+  },
+  "assistant": {
+    "title": "Quick Assistant",
+    "welcome": "Hello! How can I assist you with your legal questions?",
+    "placeholder": "Ask a quick question...",
+    "typing": "Typing..."
+  },
+  "issueDetail": {
+    "back": "Back to Dashboard",
+    "edit": "Edit",
+    "delete": "Delete",
+    "status": "Status: {{status}}",
+    "description": "Description",
+    "relatedDocs": "Related Documents",
+    "view": "View",
+    "caseHistory": "Case History",
+    "noHistory": "No history found for this case."
+  },
+  "docDetail": {
+    "back": "Back to Dashboard",
+    "delete": "Delete",
+    "docInfo": "Document Information",
+    "uploaded": "Uploaded",
+    "uploadedBy": "Uploaded by",
+    "userInfo": "User Information",
+    "email": "Email",
+    "relatedIssue": "Related Issue",
+    "fileAccess": "File Access",
+    "fileAccessDesc": "Click to view or download the uploaded file.",
+    "viewDoc": "View Document"
+  },
+  "profile": {
+    "edit": "Edit Profile",
+    "cancel": "Cancel",
+    "accountType": "{{role}} Account",
+    "fullName": "Full Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "phonePlaceholder": "Add your phone number",
+    "aadhaar": "Aadhaar Number",
+    "aadhaarNote": "Aadhaar number cannot be changed.",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "changePasswordTitle": "Change Password",
+    "oldPassword": "Old Password",
+    "newPassword": "New Password",
+    "updatePassword": "Update Password",
+    "updatingPassword": "Saving..."
+  },
+  "features": {
+    "sectionTitle": "What is Nyaya Saathi?",
+    "title": "AI-Powered Legal Assistant for <span class=\"gradient-text\">Rural India</span>",
+    "subtitle": "We make justice accessible by translating complex paperwork into simple conversations, ensuring no one is left behind due to legal jargon or digital illiteracy.",
+    "pills": {
+      "secure": "Secure & Private",
+      "available": "24/7 Available",
+      "multilang": "Multi-language Support",
+      "ai": "AI-Powered"
+    },
+    "items": {
+      "voice": {
+        "title": "Simple Voice Conversations",
+        "desc": "Helps villagers complete legal and government paperwork through natural Hindi and regional dialects."
+      },
+      "docs": {
+        "title": "Auto-Generates Documents",
+        "desc": "Creates ready-to-submit forms, affidavits, and legal notices based on your conversation."
+      },
+      "issues": {
+        "title": "Solves Common Issues",
+        "desc": "Expertly handles Aadhaar, pension, land disputes, missing certificates, and fraud-related cases."
+      },
+      "human": {
+        "title": "Human Escalation",
+        "desc": "For complex issues, we seamlessly connect you with qualified local paralegals for expert assistance."
+      }
+    }
+  },
+  "about": {
+    "sectionTitle": "The Core Problem",
+    "title": "Bridging the Justice Gap for <span class=\"gradient-text\">900 Million Indians</span>",
+    "subtitle": "Essential legal processes are broken for rural communities. From inaccessible government services to intimidating court procedures, the system is designed for failure.",
+    "problems": {
+      "docs": {
+        "title": "Document & Court Summons Errors",
+        "desc": "Low digital literacy and complex legal language lead to mistakes and missed deadlines."
+      },
+      "welfare": {
+        "title": "Welfare Scheme & Land Gaps",
+        "desc": "Outdated records and middlemen exploitation block access to rightful benefits and property claims."
+      },
+      "access": {
+        "title": "Limited Legal Access",
+        "desc": "Courts are far, lawyers are expensive, and reliable legal aid is often out of reach for many villagers."
+      }
+    }
+  },
+  "whyNow": {
+    "sectionTitle": "Why Now?",
+    "title": "The Perfect Confluence of <span class=\"gradient-text\">Factors</span>",
+    "subtitle": "We are uniquely positioned to deliver AI-powered legal access to 900 million underserved Indians because the technology, infrastructure, and user readiness have finally aligned.",
+    "factors": {
+      "digitalIndia": "Digital India infrastructure is now operational and widespread.",
+      "ai": "Advanced AI models for local languages have matured and are reliable.",
+      "reforms": "Government legal aid reforms are expanding rapidly.",
+      "adoption": "Rural digital adoption and trust in online platforms are at an all-time high."
+    }
+  },
+  "howItWorks": {
+    "sectionTitle": "How It Works",
+    "title": "From Conversation to Resolution in <span class=\"gradient-text\">6 Simple Steps</span>",
+    "steps": {
+      "access": {
+        "name": "Access",
+        "desc": "User opens the Nyaya Saathi app or visits a nearby kiosk."
+      },
+      "speak": {
+        "name": "Speak the Problem",
+        "desc": "User explains the issue in Hindi or their local dialect; no legal terms needed."
+      },
+      "ai": {
+        "name": "AI Understands",
+        "desc": "Our AI extracts key information, identifies the issue, and asks clarifying questions."
+      },
+      "generate": {
+        "name": "Auto-Generate Documents",
+        "desc": "The system instantly fills forms and generates affidavits, letters, or certificates."
+      },
+      "guide": {
+        "name": "Guide & Submit",
+        "desc": "We provide clear voice guidance, print necessary forms, and help track the status."
+      },
+      "escalate": {
+        "name": "Human Escalation",
+        "desc": "Complex cases are intelligently routed to our network of local paralegals for expert help."
+      }
+    }
   }
 }

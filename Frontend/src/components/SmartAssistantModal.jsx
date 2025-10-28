@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Sparkles, Loader2, X, MessageSquare, Mic } from "lucide-react"; // <-- Import Mic icon
+import { Send, Sparkles, Loader2, X, MessageSquare, Mic } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { aiService } from "../services/aiService";
 import toast from "react-hot-toast";
 
@@ -40,14 +41,14 @@ const AIMessage = ({ text }) => {
 };
 
 const SmartAssistantModal = ({ isOpen, onClose }) => {
+  const { t, i18n } = useTranslation();
   const [conversation, setConversation] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false); // <-- State for voice recording
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef(null);
-  const recognitionRef = useRef(null); // <-- Ref for speech recognition instance
+  const recognitionRef = useRef(null);
 
-  // --- NEW: Setup speech recognition on mount ---
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window)) {
       console.warn("Speech recognition not supported in this browser.");
@@ -56,24 +57,24 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
     const recognition = new window.webkitSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = 'en-IN';
+    recognition.lang = i18n.language === 'hi' ? 'hi-IN' : 'en-IN';
 
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
-      handleAutoSubmit(transcript); // Automatically submit the transcribed text
+      handleAutoSubmit(transcript);
     };
 
     recognition.onerror = (event) => toast.error(`Microphone error: ${event.error}`);
     recognition.onend = () => setIsRecording(false);
     recognitionRef.current = recognition;
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     if (isOpen) {
       setConversation([
         {
           role: "assistant",
-          content: "Hello! How can I assist you with your legal questions?",
+          content: t("assistant.welcome"),
         },
       ]);
       setInput("");
@@ -81,20 +82,19 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
         recognitionRef.current?.stop();
       }
     }
-  }, [isOpen]);
+  }, [isOpen, t]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation]);
 
-  // --- NEW: Central function to handle submission from both text and voice ---
   const handleAutoSubmit = async (query) => {
     if (!query.trim() || isLoading) return;
 
     const userMessage = { role: "user", content: query };
     const newConversation = [...conversation, userMessage];
     setConversation(newConversation);
-    setInput(""); // Clear text input after submission
+    setInput("");
     setIsLoading(true);
 
     try {
@@ -102,7 +102,6 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
         role: msg.role,
         content: msg.content,
       }));
-      // Use the centralized aiService
       const aiResponse = await aiService.getChatResponse(history.slice(0, -1), userMessage.content);
       setConversation((prev) => [...prev, { role: "assistant", content: aiResponse }]);
     } catch (error) {
@@ -112,13 +111,11 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
     }
   };
   
-  // Existing text form submission now uses the central submit function
   const handleSubmit = (e) => {
     e.preventDefault();
     handleAutoSubmit(input);
   };
 
-  // --- NEW: Function to toggle the microphone ---
   const handleVoiceCommand = () => {
     if (isRecording) {
       recognitionRef.current?.stop();
@@ -156,7 +153,7 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
                   <MessageSquare size={20} className="text-cyan-600" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-900">
-                  Quick Assistant
+                  {t("assistant.title")}
                 </h3>
               </div>
               <button
@@ -197,7 +194,7 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
                     <Sparkles size={16} className="text-cyan-600" />
                   </div>
                   <div className="p-3 rounded-xl bg-slate-100 text-slate-800 rounded-bl-none flex items-center gap-2">
-                    <Loader2 className="animate-spin" size={14} /> Typing...
+                    <Loader2 className="animate-spin" size={14} /> {t("assistant.typing")}
                   </div>
                 </div>
               )}
@@ -213,11 +210,10 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask a quick question..."
+                  placeholder={t("assistant.placeholder")}
                   className="input-style flex-1"
                   disabled={isLoading}
                 />
-                {/* --- NEW: Mic Button --- */}
                 <button
                   type="button"
                   onClick={handleVoiceCommand}

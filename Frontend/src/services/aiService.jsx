@@ -1,35 +1,55 @@
 import apiClient from '../api/axiosConfig';
 
-const getGenerativeAIChatResponse = async (conversationHistory, newQuery) => {
+/**
+ * The single source for all AI interactions in the NyayaSaathi application.
+ * AI responses are dynamic based on user role and always NyayaSaathi-focused.
+ */
+
+const getGenerativeAIChatResponse = async (conversationHistory, newQuery, userRole = "citizen") => {
   try {
-    // Add a system prompt to restrict responses to NyayaSaathi-related topics
+    // 🧭 Dynamic system prompt
     const systemPrompt = `
-You are **NyayaSaathi AI**, a friendly and empathetic legal support assistant for the NyayaSaathi platform.  
-You speak in a natural, human-like tone — warm, polite, and easy to understand.  
-You can use conversational expressions like “Sure!”, “Let’s look into that!”, or “Here’s what I found.” — but stay professional and clear.
+You are NyayaSaathi AI — a friendly, human-like legal support assistant for the NyayaSaathi platform.
 
-🧭 Your Responsibilities:
-- Help users understand, navigate, and use the NyayaSaathi application.
-- Explain how to file complaints, upload documents, select issue types, and track case updates.
-- Provide guidance related to NyayaSaathi’s features, processes, and legal assistance.
+🎯 Core Role:
+- You ONLY answer questions related to NyayaSaathi: case filing, issue types, document uploads, platform guidance, and legal support workflow.
+- If the user asks about anything unrelated, reply:
+  > "I'm sorry, but I can only help with queries related to the NyayaSaathi application."
 
-🚫 Important Rule:
-If the user asks anything unrelated to NyayaSaathi, kindly respond:
-> "I'm sorry, but I can only help with queries related to the NyayaSaathi application."
+🧑‍⚖️ Behavior by User Role:
 
-🎯 Tone:
-- Be concise, empathetic, and clear.
-- Avoid sounding robotic or overly formal.
-- Never fabricate information outside NyayaSaathi’s scope.
+1️⃣ Citizen:
+- Respond like a helpful human friend.
+- Keep answers short (2–4 sentences).
+- Focus on guidance, reassurance, and clear next steps.
+- Avoid complex legal jargon; use simple, supportive language.
+
+2️⃣ Officer:
+- Be formal yet conversational.
+- Provide slightly more detail (up to 5–6 sentences).
+- Focus on case handling, complaint verification, and workflow clarity.
+
+3️⃣ Admin:
+- Be concise and professional.
+- Focus on platform management, issue tracking, and user support queries.
+
+💬 Example for Citizen:
+User: "I want to take a divorce."
+AI: "I'm really sorry you're going through this. I can help guide you on how to get legal support through NyayaSaathi. Would you like me to show you how to file a case or connect you to a legal aid officer?"
+
+Tone:
+- Always warm, empathetic, and easy to understand.
+- Never robotic, overly formal, or filled with unnecessary legal detail.
 `;
 
+    // Send request to backend
     const { data } = await apiClient.post('/ai/chat', {
-      systemPrompt, // ⬅️ Added here
+      systemPrompt,
       conversationHistory,
       newQuery,
+      userRole, // optional, for backend logic if supported
     });
 
-    // Updated to match the backend's ApiResponse structure
     if (data.success && data.data.response) {
       return data.data.response;
     } else {
@@ -38,7 +58,6 @@ If the user asks anything unrelated to NyayaSaathi, kindly respond:
 
   } catch (error) {
     console.error("AI Service Error:", error);
-    // Provide a more meaningful error message from the server if available
     const errorMessage =
       error.response?.data?.message ||
       "Sorry, I couldn't connect to the AI assistant right now. Please check the server connection.";
@@ -46,6 +65,9 @@ If the user asks anything unrelated to NyayaSaathi, kindly respond:
   }
 };
 
+// ----------------------------------------------
+// Text extraction helper (unchanged)
+// ----------------------------------------------
 const parseFormDataFromText = (text) => {
   const lowerText = text.toLowerCase();
   const data = {};

@@ -15,16 +15,16 @@ const LanguageSwitcher = () => {
   ];
 
   return (
-    <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-full p-1">
-      <Languages size={16} className="text-slate-400 ml-2" />
+    <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-full p-1">
+      <Languages size={16} className="text-slate-500 ml-2" />
       {languages.map((lang) => (
         <button
           key={lang.code}
           onClick={() => changeLanguage(lang.code)}
           className={`px-3 py-1 text-sm rounded-full transition-colors duration-200 ${
-            i18n.language === lang.code
-              ? 'bg-cyan-500 text-white font-semibold'
-              : 'text-slate-300 hover:bg-slate-700'
+            i18n.language.startsWith(lang.code)
+              ? 'bg-cyan-500 text-white font-semibold shadow-sm'
+              : 'text-slate-600 hover:bg-white'
           }`}
         >
           {lang.name}

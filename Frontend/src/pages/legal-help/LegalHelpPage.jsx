@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Loader2, MessageSquare, Mic } from "lucide-react"; // <-- Import Mic icon
+import { Send, Sparkles, Loader2, MessageSquare, Mic } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { aiService } from "../../services/aiService";
@@ -21,15 +21,14 @@ const AIMessage = ({ text }) => {
 };
 
 const LegalHelpPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [conversation, setConversation] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false); // <-- State for voice recording
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef(null);
-  const recognitionRef = useRef(null); // <-- Ref for speech recognition instance
+  const recognitionRef = useRef(null);
 
-  // --- NEW: Setup speech recognition ---
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window)) {
         console.warn("Speech recognition not supported in this browser.");
@@ -38,30 +37,29 @@ const LegalHelpPage = () => {
     const recognition = new window.webkitSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = 'en-IN';
+    recognition.lang = i18n.language === 'hi' ? 'hi-IN' : 'en-IN';
 
     recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
-        handleAutoSubmit(transcript); // Automatically submit after speaking
+        handleAutoSubmit(transcript);
     };
 
     recognition.onerror = (event) => toast.error(`Microphone error: ${event.error}`);
     recognition.onend = () => setIsRecording(false);
     recognitionRef.current = recognition;
-  }, []);
+  }, [i18n.language]);
   
   useEffect(() => {
     setConversation([{
         role: 'assistant',
-        content: "Welcome to the NyayaSaathi Legal Assistant! How can I help you today? You can ask me about Aadhaar, Land Disputes, Pension Schemes, and more."
+        content: t("legalHelpPage.welcome")
     }]);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation]);
 
-  // --- NEW: Central submission function ---
   const handleAutoSubmit = async (query) => {
     if (!query.trim() || isLoading) return;
 
@@ -87,7 +85,6 @@ const LegalHelpPage = () => {
     handleAutoSubmit(input);
   };
   
-  // --- NEW: Function to toggle the microphone ---
   const handleVoiceCommand = () => {
     if (isRecording) {
       recognitionRef.current?.stop();
@@ -102,25 +99,19 @@ const LegalHelpPage = () => {
   };
 
   const handleSuggestedQuestion = (question) => {
-      // Use the auto-submit function for suggested questions too
       handleAutoSubmit(question);
   };
 
-  const suggestedQuestions = [
-      "How do I update my address on my Aadhaar card?",
-      "What are the steps to resolve a land dispute?",
-      "Tell me about the widow pension scheme.",
-      "What should I do if I receive a court summons?"
-  ];
+  const suggestedQuestions = Object.values(t("legalHelpPage.suggestions", { returnObjects: true }));
 
   return (
     <div className="w-full max-w-4xl mx-auto py-8 flex flex-col h-[calc(100vh-8rem)]">
       <div className="text-center mb-6">
         <h1 className="text-4xl font-bold text-slate-900 flex items-center justify-center gap-3">
             <MessageSquare className="text-cyan-600"/>
-            AI Legal Assistant
+            {t("legalHelpPage.title")}
         </h1>
-        <p className="text-slate-600 mt-2">Your 24/7 partner for legal guidance powered by AI.</p>
+        <p className="text-slate-600 mt-2">{t("legalHelpPage.subtitle")}</p>
       </div>
 
       <div className="flex-1 bg-white border border-slate-200 rounded-xl shadow-lg flex flex-col overflow-hidden">
@@ -137,7 +128,7 @@ const LegalHelpPage = () => {
                  <div className="flex gap-4 items-start justify-start">
                     <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0"><Sparkles size={20} className="text-cyan-600"/></div>
                     <div className="max-w-[85%] p-4 rounded-2xl bg-slate-100 text-slate-800 rounded-bl-none flex items-center gap-2">
-                        <Loader2 className="animate-spin" size={16}/> Thinking...
+                        <Loader2 className="animate-spin" size={16}/> {t("legalHelpPage.thinking")}
                     </div>
                 </div>
             )}
@@ -145,7 +136,7 @@ const LegalHelpPage = () => {
 
             {conversation.length <= 1 && (
                 <div className="py-8">
-                    <h3 className="text-center text-slate-500 font-semibold mb-4">Or try one of these suggestions:</h3>
+                    <h3 className="text-center text-slate-500 font-semibold mb-4">{t("legalHelpPage.suggestionTitle")}</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {suggestedQuestions.map(q => (
                             <button key={q} onClick={() => handleSuggestedQuestion(q)} className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-left text-sm text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all">
@@ -163,11 +154,10 @@ const LegalHelpPage = () => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={t("legalHelpPage.placeholder", "Ask your legal question...")}
+              placeholder={t("legalHelpPage.placeholder")}
               className="input-style flex-1"
               disabled={isLoading}
             />
-            {/* --- NEW: Mic Button --- */}
             <button
               type="button"
               onClick={handleVoiceCommand}

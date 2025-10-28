@@ -25,20 +25,22 @@ const getAIChatResponseController = asyncHandler(async (req, res) => {
         throw new ApiError(500, "The AI service is not configured correctly on the server.");
     }
 
-    // --- 3. REFINED SYSTEM PROMPT (Same great instructions, more fluid) ---
+    // --- 3. UPDATED SYSTEM PROMPT ---
     const systemInstruction = `
+### CRITICAL RULE
+**Your most important instruction is to ALWAYS respond in the exact same language as the user's last question.** If the user asks in Hindi, you MUST reply in Hindi. If they ask in English, you MUST reply in English. Do not break this rule under any circumstances.
+
 ### IDENTITY & PERSONA
 You are NyayaSaathi, a warm, empathetic, and highly practical AI legal assistant for the people of rural India. Your personality is that of a knowledgeable and trustworthy friend who simplifies complex problems.
 
 ### CORE MISSION
 Your primary goal is to provide the **clearest and most actionable steps** to help users solve their legal and administrative problems. Always focus on the next immediate step the user can take.
 
-### KEY RULES
-1.  **LANGUAGE MIRRORING (CRITICAL):** Your #1 rule is to ALWAYS respond in the exact same language as the user's last question (e.g., Hindi for Hindi, English for English). Never break this rule.
-2.  **ACTION-ORIENTED:** Don't just give information; tell the user *what to do*. Your guidance should be a practical plan.
-3.  **SIMPLICITY:** Use extremely simple language. Avoid legal jargon at all costs. Explain concepts as you would to someone with no legal background.
-4.  **CONCISENESS:** Keep responses short and to the point. Use lists and bold headings. Long paragraphs are forbidden.
-5.  **PLATFORM INTEGRATION:** When relevant, guide users on how to use the NyayaSaathi platform to achieve their goal (e.g., "We can prepare that application right here on NyayaSaathi.").
+### KEY BEHAVIORS
+1.  **ACTION-ORIENTED:** Don't just give information; tell the user *what to do*. Your guidance should be a practical plan.
+2.  **SIMPLICITY:** Use extremely simple language. Avoid legal jargon at all costs. Explain concepts as you would to someone with no legal background.
+3.  **CONCISE BUT COMPLETE:** Keep responses short and to the point, but always finish your sentences. Use lists and bold headings. Long paragraphs are forbidden.
+4.  **PLATFORM INTEGRATION:** When relevant, guide users on how to use the NyayaSaathi platform to achieve their goal (e.g., "We can prepare that application right here on NyayaSaathi.").
 
 ### TONE OF VOICE
 - **Reassuring & Calm:** Start by acknowledging the user's stress. (e.g., "I understand this can be stressful, let's break it down.")
@@ -48,14 +50,11 @@ Your primary goal is to provide the **clearest and most actionable steps** to he
 ### OUTPUT FORMAT
 - Use **bold headings** for key sections.
 - Use **numbered lists (1, 2, 3...)** for step-by-step instructions.
-- Use **bullet points (*)** for lists of documents or options.
 `;
 
     // --- 4. Initialize AI Model with Fixes ---
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     
-    // **FIX #2: Added Safety Settings** to prevent the model from being too sensitive
-    // This allows discussions on legal topics without being blocked unnecessarily.
     const safetySettings = [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
@@ -64,7 +63,6 @@ Your primary goal is to provide the **clearest and most actionable steps** to he
     ];
 
     const model = genAI.getGenerativeModel({
-        // **FIX #1: Corrected Model Name**
         model: "gemini-2.5-flash", 
         systemInstruction: systemInstruction,
         safetySettings: safetySettings,
@@ -88,22 +86,29 @@ Your primary goal is to provide the **clearest and most actionable steps** to he
         const chat = model.startChat({
             history: formattedHistory,
             generationConfig: {
-                maxOutputTokens: 1000,
+                // **THE FIX:** Increased token limit to prevent abrupt cut-offs.
+                maxOutputTokens: 2048, 
             },
         });
 
         const result = await chat.sendMessage(newQuery);
         const response = result.response;
-
-        // **FIX #3: Enhanced Debugging**
-        // This will log the entire response object, showing the `finishReason` if it's empty.
-        // console.log("Full Gemini Response:", JSON.stringify(response, null, 2));
+        
+        // **THE FIX:** Improved validation and logging for abrupt cut-offs.
+        if (response.promptFeedback?.blockReason) {
+            console.error("Gemini Response Blocked:", response.promptFeedback);
+            throw new ApiError(500, "The response was blocked by the AI's safety filters.");
+        }
 
         const aiResponse = response.text();
 
         if (!aiResponse) {
-            console.error("Empty response from Gemini. Finish Reason:", response.promptFeedback || "Unknown");
-            throw new ApiError(500, "Received an empty response from the AI model, possibly due to content filtering.");
+             const finishReason = response.candidates?.[0]?.finishReason;
+             console.error(`Empty response from Gemini. Finish Reason: ${finishReason || "Unknown"}`);
+             if (finishReason === "MAX_TOKENS") {
+                console.warn("WARNING: AI response was cut off because it reached the maximum token limit.");
+             }
+             throw new ApiError(500, "Received an empty response from the AI model.");
         }
 
         // --- 7. Send a successful, standardized response ---

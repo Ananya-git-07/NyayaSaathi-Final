@@ -1,3 +1,5 @@
+// PASTE THIS ENTIRE FILE INTO Backend/src/utils/cloudinary.js
+
 import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 
@@ -12,26 +14,37 @@ const uploadOnCloudinary = async (localFilePath) => {
     try {
         if (!localFilePath) return null;
 
-        // Upload the file to Cloudinary
         const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "auto", // Automatically detect the file type
-            folder: "nyayasaathi_uploads" // Optional: organize uploads into a folder
+            resource_type: "auto",
+            folder: "nyayasaathi_uploads"
         });
-
-        // File has been uploaded successfully
-        // console.log("File is uploaded on Cloudinary: ", response.url);
         
-        // Unlink the locally saved temporary file
         fs.unlinkSync(localFilePath);
         
         return response;
 
     } catch (error) {
-        // If the upload operation failed, remove the locally saved temporary file
-        fs.unlinkSync(localFilePath); 
+        if (fs.existsSync(localFilePath)) {
+            fs.unlinkSync(localFilePath); 
+        }
         console.error("Cloudinary upload failed:", error);
         return null;
     }
 }
 
-export { uploadOnCloudinary };
+// --- THIS IS THE FIX: Add function to delete assets ---
+const deleteFromCloudinary = async (publicId) => {
+    if (!publicId) return null;
+    try {
+        const result = await cloudinary.uploader.destroy(publicId);
+        console.log("Deleted old asset from Cloudinary:", result);
+        return result;
+    } catch (error) {
+        console.error("Cloudinary deletion failed:", error);
+        return null;
+    }
+};
+// --- END OF FIX ---
+
+
+export { uploadOnCloudinary, deleteFromCloudinary };

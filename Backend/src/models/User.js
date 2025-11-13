@@ -1,3 +1,5 @@
+// PASTE THIS ENTIRE FILE INTO Backend/src/models/User.js
+
 import mongoose from "mongoose"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
@@ -36,8 +38,16 @@ const userSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
-      match: [/^\d{10}$/, "Phone number must be 10 digits"],
     },
+    // --- THIS IS THE FIX: Add fields for profile picture ---
+    profilePictureUrl: {
+      type: String,
+      default: "", // Default to an empty string
+    },
+    profilePictureCloudinaryId: {
+      type: String, // To store the public_id for deletion
+    },
+    // --- END OF FIX ---
     refreshToken: {
       type: String,
     },
@@ -75,6 +85,10 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 // Generate Access Token
 userSchema.methods.generateAccessToken = function () {
+  if (!process.env.ACCESS_TOKEN_SECRET) {
+    throw new Error("ACCESS_TOKEN_SECRET is not defined in .env file. Cannot sign token.");
+  }
+
   return jwt.sign(
     {
       _id: this._id,

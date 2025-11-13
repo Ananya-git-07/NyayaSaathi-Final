@@ -1,11 +1,15 @@
+// PASTE THIS ENTIRE FILE INTO src/pages/HomePage/AuthenticatedHero.jsx
+
 "use client"
 import { motion } from "framer-motion"
 import { Mic, User, ArrowRight } from "lucide-react"
 import { useAuth } from "../../context/AuthContext"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 const AuthenticatedHero = ({ onVoiceQueryClick }) => {
   const { user } = useAuth()
+  const { t } = useTranslation()
 
   return (
     <section className="w-full flex items-center justify-center py-24 sm:py-32 container-padding">
@@ -21,11 +25,11 @@ const AuthenticatedHero = ({ onVoiceQueryClick }) => {
             </div>
         </div>
         
-        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 mb-2">Welcome back,</h1>
+        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">{t("authHero.welcome")}</h1>
         <h2 className="text-3xl md:text-5xl font-bold gradient-text mb-6">{user?.fullName || "User"}!</h2>
         
-        <p className="max-w-2xl mx-auto text-lg text-slate-700 mb-10 leading-relaxed">
-            Your legal journey continues here. Start a voice query for quick assistance or head to your dashboard to manage all your cases.
+        <p className="max-w-2xl mx-auto text-lg text-slate-700 dark:text-slate-400 mb-10 leading-relaxed">
+            {t("authHero.subtitle")}
         </p>
 
         <div className="flex flex-col items-center justify-center gap-6">
@@ -34,10 +38,10 @@ const AuthenticatedHero = ({ onVoiceQueryClick }) => {
               className="btn-primary text-lg py-4 px-8 rounded-2xl shadow-xl shadow-cyan-200/50 group"
             >
               <Mic size={24} className="group-hover:scale-110 transition-transform" />
-              Start a Voice Query
+              {t("authHero.voiceQuery")}
             </button>
-            <Link to="/dashboard" className="font-semibold text-slate-700 hover:text-cyan-600 transition-colors group flex items-center gap-2">
-                Go to Full Dashboard
+            <Link to="/dashboard" className="font-semibold text-slate-700 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors group flex items-center gap-2">
+                {t("authHero.goToDashboard")}
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform"/>
             </Link>
         </div>

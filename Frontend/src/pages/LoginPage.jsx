@@ -1,3 +1,5 @@
+// PASTE THIS ENTIRE FILE INTO src/pages/LoginPage.jsx
+
 "use client"
 
 import { useState } from "react"
@@ -47,26 +49,26 @@ const LoginPage = () => {
             <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
               <Scale size={32} />
             </div>
-            <h3 className="text-2xl font-bold mb-2">Welcome Back</h3>
-            <p className="text-white/80">Continue your legal journey with us</p>
+            <h3 className="text-2xl font-bold mb-2">{t("loginPage.heroTitle")}</h3>
+            <p className="text-white/80">{t("loginPage.heroSubtitle")}</p>
           </div>
         </div>
       </div>
 
       {/* Form Side */}
-      <div className="w-full lg:w-3/5 p-8 lg:p-12 flex flex-col justify-center bg-white">
+      <div className="w-full lg:w-3/5 p-8 lg:p-12 flex flex-col justify-center bg-white dark:bg-slate-800">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">{t("loginPage.title")}</h2>
-          <p className="text-slate-600">{t("loginPage.subtitle")}</p>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t("loginPage.title")}</h2>
+          <p className="text-slate-600 dark:text-slate-400">{t("loginPage.subtitle")}</p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6 text-center">{error}</div>
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 p-4 rounded-lg mb-6 text-center">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               {t("loginPage.emailLabel")}
             </label>
             <div className="relative">
@@ -84,7 +86,7 @@ const LoginPage = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               {t("loginPage.passwordLabel")}
             </label>
             <div className="relative">
@@ -113,11 +115,11 @@ const LoginPage = () => {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  {t("loginPage.signingInButton")}
+                  <span>{t("loginPage.signingInButton")}</span>
                 </>
               ) : (
                 <>
-                  {t("loginPage.signInButton")}
+                  <span>{t("loginPage.signInButton")}</span>
                   <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
@@ -125,9 +127,9 @@ const LoginPage = () => {
           </div>
         </form>
 
-        <p className="mt-8 text-center text-sm text-slate-600">
+        <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
           {t("loginPage.noAccount")}{" "}
-          <Link to="/register" className="font-medium text-cyan-600 hover:text-cyan-700 transition-colors">
+          <Link to="/register" className="font-medium text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-500 transition-colors">
             {t("loginPage.signUpLink")}
           </Link>
         </p>

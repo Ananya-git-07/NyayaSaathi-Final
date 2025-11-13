@@ -1,3 +1,5 @@
+// PASTE THIS ENTIRE FILE INTO src/components/Spinner.jsx
+
 "use client"
 
 import { motion } from "framer-motion"
@@ -13,7 +15,8 @@ const Spinner = () => {
       >
         <Scale size={24} className="text-white" />
       </motion.div>
-      <p className="text-slate-600 font-medium">Loading...</p>
+      {/* --- THIS IS THE FIX: Added dark mode text color --- */}
+      <p className="text-slate-600 dark:text-slate-400 font-medium">Loading...</p>
     </div>
   )
 }

@@ -7,7 +7,15 @@
     "logout": "Logout",
     "login": "Login",
     "register": "Register",
-    "legalHelp": "Legal Help"
+    "legalHelp": "Legal Help",
+    "brand1": "Nyaya",
+    "brand2": "Saathi"
+  },
+  "roles": {
+    "citizen": "Citizen",
+    "employee": "Employee",
+    "paralegal": "Paralegal",
+    "admin": "Admin"
   },
   "loginPage": {
     "title": "Welcome Back!",
@@ -17,7 +25,9 @@
     "signInButton": "Sign In",
     "signingInButton": "Signing In...",
     "noAccount": "Don't have an account?",
-    "signUpLink": "Sign up"
+    "signUpLink": "Sign up",
+    "heroTitle": "Welcome Back",
+    "heroSubtitle": "Continue your legal journey with us"
   },
   "registerPage": {
     "title": "Create an Account",
@@ -25,12 +35,6 @@
     "joinTitle": "Join NyayaSaathi",
     "joinSubtitle": "Empowering every citizen with accessible and fair legal justice.",
     "selectRole": "Select Your Role",
-    "roles": {
-      "citizen": "Citizen",
-      "employee": "Employee",
-      "paralegal": "Paralegal",
-      "admin": "Admin"
-    },
     "roleDescriptions": {
       "citizen": "Access legal help and manage your issues",
       "employee": "Help citizens with legal processes at kiosks",
@@ -155,6 +159,7 @@
   "footer": {
     "quickLinks": "Quick Links",
     "contact": "Contact",
+    "location": "New Delhi, India",
     "tagline": "© 2024 NyayaSaathi. All rights reserved. | Government of India Initiative",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",

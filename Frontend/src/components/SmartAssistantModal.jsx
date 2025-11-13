@@ -1,3 +1,5 @@
+// PASTE THIS ENTIRE FILE INTO src/components/SmartAssistantModal.jsx
+
 "use client"
 
 import { useState, useRef, useEffect } from "react";
@@ -29,7 +31,7 @@ const AIMessage = ({ text }) => {
     <div className="whitespace-pre-wrap">
       {parts.map((part, index) =>
         part.startsWith("**") && part.endsWith("**") ? (
-          <strong key={index} className="text-slate-900">
+          <strong key={index} className="text-slate-900 dark:text-white">
             {part.slice(2, -2)}
           </strong>
         ) : (
@@ -144,21 +146,21 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="bg-white rounded-xl shadow-2xl w-full max-w-md border border-slate-200 h-[70vh] flex flex-col"
+            className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md border border-slate-200 dark:border-slate-700 h-[70vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center p-4 border-b border-slate-200">
+            <div className="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center">
-                  <MessageSquare size={20} className="text-cyan-600" />
+                <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center">
+                  <MessageSquare size={20} className="text-cyan-600 dark:text-cyan-400" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                   {t("assistant.title")}
                 </h3>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-full text-slate-500 hover:bg-slate-100"
+                className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
               >
                 <X size={20} />
               </button>
@@ -173,15 +175,15 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
                   }`}
                 >
                   {msg.role === "assistant" && (
-                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-                      <Sparkles size={16} className="text-cyan-600" />
+                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                      <Sparkles size={16} className="text-cyan-600 dark:text-cyan-400" />
                     </div>
                   )}
                   <div
                     className={`max-w-[85%] p-3 rounded-xl ${
                       msg.role === "user"
                         ? "bg-cyan-600 text-white rounded-br-none"
-                        : "bg-slate-100 text-slate-800 rounded-bl-none"
+                        : "bg-slate-100 text-slate-800 rounded-bl-none dark:bg-slate-700 dark:text-slate-200"
                     }`}
                   >
                     <AIMessage text={msg.content} />
@@ -190,10 +192,10 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
               ))}
               {isLoading && (
                 <div className="flex gap-3 items-start justify-start">
-                  <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-                    <Sparkles size={16} className="text-cyan-600" />
+                  <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                    <Sparkles size={16} className="text-cyan-600 dark:text-cyan-400" />
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-100 text-slate-800 rounded-bl-none flex items-center gap-2">
+                  <div className="p-3 rounded-xl bg-slate-100 text-slate-800 rounded-bl-none dark:bg-slate-700 dark:text-slate-200 flex items-center gap-2">
                     <Loader2 className="animate-spin" size={14} /> {t("assistant.typing")}
                   </div>
                 </div>
@@ -201,7 +203,7 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-4 border-t border-slate-200">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700">
               <form
                 onSubmit={handleSubmit}
                 className="flex items-center gap-2"
@@ -221,7 +223,7 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
                   className={`p-3 rounded-lg transition-colors duration-200 ${
                     isRecording 
                       ? 'bg-red-500 text-white animate-pulse' 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'
                   }`}
                 >
                   <Mic size={18} />

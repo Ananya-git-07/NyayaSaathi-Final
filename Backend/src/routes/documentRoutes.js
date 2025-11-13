@@ -24,7 +24,7 @@ router.post("/upload", upload.single("documentFile"), async (req, res, next) => 
       issueId: issueId || undefined,
       documentType,
       fileUrl: cloudinaryResponse.url,
-      submissionStatus: "Submitted",
+      submissionStatus: "submitted",
     });
 
     if (issueId) {

@@ -5,19 +5,29 @@
     "profile": "प्रोफ़ाइल",
     "adminPanel": "एडमिन पैनल",
     "logout": "लॉगआउट",
-    "login": "लॉग इन करें",
+    "login": "लॉग इन",
     "register": "रजिस्टर करें",
-    "legalHelp": "कानूनी सहायता"
+    "legalHelp": "कानूनी सहायता",
+    "brand1": "न्याय",
+    "brand2": "साथी"
+  },
+  "roles": {
+    "citizen": "नागरिक",
+    "employee": "कर्मचारी",
+    "paralegal": "पैरालीगल",
+    "admin": "एडमिन"
   },
   "loginPage": {
-    "title": "वापसी पर स्वागत है!",
+    "title": "आपका फिर से स्वागत है!",
     "subtitle": "न्यायसाथी पर जारी रखने के लिए साइन इन करें।",
     "emailLabel": "ईमेल पता",
     "passwordLabel": "पासवर्ड",
     "signInButton": "साइन इन करें",
     "signingInButton": "साइन इन हो रहा है...",
     "noAccount": "क्या आपका खाता नहीं है?",
-    "signUpLink": "साइन अप करें"
+    "signUpLink": "साइन अप करें",
+    "heroTitle": "आपका फिर से स्वागत है",
+    "heroSubtitle": "हमारे साथ अपनी कानूनी यात्रा जारी रखें"
   },
   "registerPage": {
     "title": "खाता बनाएं",
@@ -25,19 +35,13 @@
     "joinTitle": "न्यायसाथी में शामिल हों",
     "joinSubtitle": "प्रत्येक नागरिक को सुलभ और निष्पक्ष कानूनी न्याय के साथ सशक्त बनाना।",
     "selectRole": "अपनी भूमिका चुनें",
-    "roles": {
-      "citizen": "नागरिक",
-      "employee": "कर्मचारी",
-      "paralegal": "पैरालीगल",
-      "admin": "एडमिन"
-    },
     "roleDescriptions": {
       "citizen": "कानूनी सहायता प्राप्त करें और अपने मामले प्रबंधित करें",
       "employee": "कियोस्क पर कानूनी प्रक्रियाओं में नागरिकों की मदद करें",
       "paralegal": "कानूनी मार्गदर्शन और सहायता प्रदान करें",
       "admin": "सिस्टम प्रबंधित करें और संचालन की निगरानी करें"
     },
-    "credentialsTitle": "खाता क्रेडेंशियल्स",
+    "credentialsTitle": "खाते का विवरण",
     "fullNameLabel": "पूरा नाम *",
     "fullNamePlaceholder": "अपना पूरा नाम दर्ज करें",
     "emailLabel": "ईमेल पता *",
@@ -47,8 +51,8 @@
     "aadhaarLabel": "आधार संख्या *",
     "aadhaarPlaceholder": "12-अंकीय आधार संख्या",
     "aadhaarError": "12 अंक होने चाहिए",
-    "employeeInfoTitle": "कर्मचारी सूचना",
-    "kioskLabel": "कियोस्क असाइनमेंट *",
+    "employeeInfoTitle": "कर्मचारी की जानकारी",
+    "kioskLabel": "कियोस्क का चयन *",
     "kioskSearchPlaceholder": "स्थान, गांव, या जिले के आधार पर खोजें...",
     "kioskSelectDefault": "एक कियोस्क चुनें",
     "kioskLoading": "कियोस्क लोड हो रहे हैं...",
@@ -68,8 +72,8 @@
       "staff": "नियमित कर्मचारी",
       "manager": "टीम लीडर"
     },
-    "paralegalInfoTitle": "पैरालीगल सूचना",
-    "phoneLabel": "फोन नंबर *",
+    "paralegalInfoTitle": "पैरालीगल की जानकारी",
+    "phoneLabel": "फ़ोन नंबर *",
     "phonePlaceholder": "9876543210",
     "phoneError": "10 अंक होने चाहिए",
     "expertiseLabel": "विशेषज्ञता के क्षेत्र *",
@@ -85,20 +89,20 @@
     "expertiseHint": "विशेषज्ञता का कम से कम एक क्षेत्र चुनें।",
     "submitButton": "खाता बनाएं",
     "submittingButton": "खाता बनाया जा रहा है...",
-    "alreadyAccount": "पहले से ही एक खाता है?",
+    "alreadyAccount": "पहले से खाता है?",
     "signInLink": "साइन इन करें"
   },
   "dashboardPage": {
-    "welcome": "वापस स्वागत है, {{name}}!",
+    "welcome": "आपका फिर से स्वागत है, {{name}}!",
     "subtitle": "अपने कानूनी मामलों और दस्तावेजों का प्रबंधन करें।",
     "activeIssues": "सक्रिय मामले",
     "totalDocuments": "कुल दस्तावेज़",
     "resolvedIssues": "सुलझे हुए मामले",
     "issuesTitle": "मेरे कानूनी मामले",
-    "addIssue": "मामला जोड़ें",
+    "addIssue": "नया मामला जोड़ें",
     "viewDetails": "विवरण देखें",
     "noIssuesTitle": "कोई कानूनी मामला नहीं मिला",
-    "noIssuesSubtitle": "अपना पहला मामला बनाने के लिए \"मामला जोड़ें\" पर क्लिक करें।",
+    "noIssuesSubtitle": "अपना पहला मामला बनाने के लिए \"नया मामला जोड़ें\" पर क्लिक करें।",
     "documentsTitle": "मेरे दस्तावेज़",
     "addDocument": "दस्तावेज़ जोड़ें",
     "openFile": "फ़ाइल खोलें",
@@ -109,14 +113,14 @@
     "title": "<span class='text-cyan-400'>न्यायसाथी</span> में आपका स्वागत है",
     "subtitle": "कानूनी मार्गदर्शन और सहायता के लिए आपका विश्वसनीय डिजिटल साथी। हम कानूनी मदद को एक दोस्त से बात करने जितना आसान बनाते हैं।",
     "getStarted": "शुरू करें",
-    "login": "लॉग इन करें",
+    "login": "लॉग इन",
     "aiAssistant": "एआई-संचालित कानूनी सहायक",
     "secure": "सुरक्षित और निजी",
     "trusted": "हजारों द्वारा विश्वसनीय",
     "aiPowered": "एआई-संचालित"
   },
   "authHero": {
-    "welcome": "वापस स्वागत है,",
+    "welcome": "आपका फिर से स्वागत है,",
     "subtitle": "आपकी कानूनी यात्रा यहाँ जारी है। त्वरित सहायता के लिए वॉयस क्वेरी शुरू करें या अपने सभी मामलों का प्रबंधन करने के लिए अपने डैशबोर्ड पर जाएं।",
     "voiceQuery": "वॉयस क्वेरी शुरू करें",
     "goToDashboard": "पूरे डैशबोर्ड पर जाएं"
@@ -155,6 +159,7 @@
   "footer": {
     "quickLinks": "क्विक लिंक्स",
     "contact": "संपर्क करें",
+    "location": "नई दिल्ली, भारत",
     "tagline": "© 2024 न्यायसाथी। सर्वाधिकार सुरक्षित। | भारत सरकार की पहल",
     "privacy": "गोपनीयता नीति",
     "terms": "सेवा की शर्तें",
@@ -163,11 +168,11 @@
   "addIssueModal": {
     "title": "एक नया कानूनी मामला रिपोर्ट करें",
     "issueTypeLabel": "मामले का प्रकार *",
-    "selectPlaceholder": "मामले का प्रकार चुनें",
+    "selectPlaceholder": "एक मामले का प्रकार चुनें",
     "descriptionLabel": "विवरण *",
     "descriptionPlaceholder": "अपने मामले का विस्तार से वर्णन करें। आप वॉयस कमांड बटन का भी उपयोग कर सकते हैं।",
     "fillWithVoice": "आवाज़ से भरें",
-    "listening": "सुन रहा है...",
+    "listening": "सुन रहा हूँ...",
     "cancel": "रद्द करें",
     "submit": "मामला जमा करें",
     "submitting": "जमा हो रहा है..."
@@ -175,11 +180,11 @@
   "addDocModal": {
     "title": "नया दस्तावेज़ अपलोड करें",
     "docTypeLabel": "दस्तावेज़ का प्रकार *",
-    "docTypePlaceholder": "उदा., आधार कार्ड, भूमि विलेख",
-    "voiceHint": "कहें: \"दस्तावेज़ का प्रकार आधार कार्ड है\"",
+    "docTypePlaceholder": "उदा., आधार कार्ड, ज़मीन के कागज़",
+    "voiceHint": "बोलें: \"दस्तावेज़ का प्रकार आधार कार्ड है\"",
     "docFileLabel": "दस्तावेज़ फ़ाइल *",
     "uploadFile": "एक फ़ाइल अपलोड करें",
-    "dragDrop": "या खींचें और छोड़ें",
+    "dragDrop": "या खींच कर यहाँ डालें",
     "fileTypes": "PDF, PNG, JPG 10MB तक",
     "selectedFile": "चयनित: {{fileName}}",
     "cancel": "रद्द करें",
@@ -193,7 +198,7 @@
     "typing": "लिख रहा हूँ..."
   },
   "issueDetail": {
-    "back": "डैशबोर्ड पर वापस जाएं",
+    "back": "डैशबोर्ड पर वापस",
     "edit": "संपादित करें",
     "delete": "हटाएं",
     "status": "स्थिति: {{status}}",
@@ -204,15 +209,15 @@
     "noHistory": "इस केस का कोई इतिहास नहीं मिला।"
   },
   "docDetail": {
-    "back": "डैशबोर्ड पर वापस जाएं",
+    "back": "डैशबोर्ड पर वापस",
     "delete": "हटाएं",
     "docInfo": "दस्तावेज़ की जानकारी",
     "uploaded": "अपलोड किया गया",
-    "uploadedBy": "द्वारा अपलोड किया गया",
+    "uploadedBy": "अपलोडकर्ता",
     "userInfo": "उपयोगकर्ता की जानकारी",
     "email": "ईमेल",
     "relatedIssue": "संबंधित मामला",
-    "fileAccess": "फ़ाइल एक्सेस",
+    "fileAccess": "फ़ाइल तक पहुँच",
     "fileAccessDesc": "अपलोड की गई फ़ाइल को देखने या डाउनलोड करने के लिए क्लिक करें।",
     "viewDoc": "दस्तावेज़ देखें"
   },
@@ -232,7 +237,7 @@
     "oldPassword": "पुराना पासवर्ड",
     "newPassword": "नया पासवर्ड",
     "updatePassword": "पासवर्ड अपडेट करें",
-    "updatingPassword": "सहेज रहा है..."
+    "updatingPassword": "अपडेट हो रहा है..."
   },
   "features": {
     "sectionTitle": "न्याय साथी क्या है?",

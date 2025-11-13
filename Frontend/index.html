@@ -1,20 +1,21 @@
-<!DOCTYPE html>
+<!-- PASTE THIS ENTIRE FILE INTO index.html -->
+
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NyayaSaathi - Legal Help, Just a Voice Away</title>
-    <meta name="description" content="NyayaSaathi provides AI-powered legal aid for rural India. Get help with legal documents, government schemes, and access to justice through voice-first technology." />
-    <meta name="author" content="NyayaSaathi" />
-
-    <meta property="og:title" content="NyayaSaathi - Legal Help, Just a Voice Away" />
-    <meta property="og:description" content="Empowering 900M rural Indians with accessible legal aid through AI technology" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <title>NyayaSaathi</title>
+    <script>
+      // Prevent flash of incorrect theme
+      (function() {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.classList.add(theme);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

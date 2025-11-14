@@ -16,8 +16,6 @@
 - [⚙️ Environment Variables](#️-environment-variables)
 - [📁 Project Structure](#-project-structure)
 - [🌐 API Endpoints](#-api-endpoints)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
 
 ---
 

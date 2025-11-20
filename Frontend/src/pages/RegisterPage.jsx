@@ -201,9 +201,23 @@ const RegisterPage = () => {
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">{t("registerPage.expertiseLabel")}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                             {Object.keys(t("registerPage.expertiseAreas", { returnObjects: true })).map((area) => (
-                                <label key={area} className={`expertise-checkbox-label ${formData.areasOfExpertise.includes(t(`registerPage.expertiseAreas.${area}`)) ? "expertise-checkbox-label-active" : ""}`}>
-                                    <input type="checkbox" name="areasOfExpertise" value={t(`registerPage.expertiseAreas.${area}`)} checked={formData.areasOfExpertise.includes(t(`registerPage.expertiseAreas.${area}`))} onChange={handleChange} className="sr-only"/>
-                                    <span className="text-sm font-medium">{t(`registerPage.expertiseAreas.${area}`)}</span>
+                                <label 
+                                    key={area} 
+                                    className={`expertise-checkbox-label ${formData.areasOfExpertise.includes(t(`registerPage.expertiseAreas.${area}`)) ? "expertise-checkbox-label-active" : ""}`}
+                                    style={{ cursor: 'pointer', position: 'relative' }}
+                                    htmlFor={`expertise-${area}`}
+                                >
+                                    <input 
+                                        id={`expertise-${area}`}
+                                        type="checkbox" 
+                                        name="areasOfExpertise" 
+                                        value={t(`registerPage.expertiseAreas.${area}`)} 
+                                        checked={formData.areasOfExpertise.includes(t(`registerPage.expertiseAreas.${area}`))} 
+                                        onChange={handleChange} 
+                                        className="sr-only"
+                                        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+                                    />
+                                    <span className="text-sm font-medium select-none">{t(`registerPage.expertiseAreas.${area}`)}</span>
                                 </label>
                             ))}
                         </div>
@@ -231,7 +245,7 @@ const RegisterPage = () => {
           </div>
         </div>
 
-        <div className="w-full lg:w-3/5 p-8 sm:p-12 max-h-[90vh] overflow-y-auto">
+        <div className="w-full lg:w-3/5 p-8 sm:p-12 max-h-[90vh] overflow-y-auto" style={{ scrollBehavior: 'auto' }}>
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t("registerPage.title")}</h2>
             <p className="text-slate-600 dark:text-slate-400">{t("registerPage.subtitle")}</p>
@@ -242,22 +256,20 @@ const RegisterPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{t("registerPage.selectRole")}</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { value: "citizen", icon: <User size={20} /> },
-                  { value: "employee", icon: <Users size={20} /> },
-                  { value: "paralegal", icon: <Award size={20} /> },
-                  { value: "admin", icon: <Building size={20} /> },
-                ].map((role) => (
-                  <label key={role.value} className={`flex flex-col sm:flex-row items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${formData.role === role.value ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:bg-cyan-900/50 dark:border-cyan-500 dark:text-cyan-300" : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 dark:hover:border-slate-500"}`}>
-                    <input type="radio" name="role" value={role.value} checked={formData.role === role.value} onChange={handleChange} className="sr-only"/>
-                    <div className="flex-shrink-0">{role.icon}</div>
-                    <div className="text-center sm:text-left">
-                      <div className="font-medium">{t(`roles.${role.value}`)}</div>
-                      <div className="text-xs opacity-75 hidden sm:block">{t(`registerPage.roleDescriptions.${role.value}`)}</div>
-                    </div>
-                  </label>
-                ))}
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all cursor-pointer"
+                  required
+                >
+                  <option value="citizen">{t('roles.citizen')} - {t('registerPage.roleDescriptions.citizen')}</option>
+                  <option value="employee">{t('roles.employee')} - {t('registerPage.roleDescriptions.employee')}</option>
+                  <option value="paralegal">{t('roles.paralegal')} - {t('registerPage.roleDescriptions.paralegal')}</option>
+                  <option value="admin">{t('roles.admin')} - {t('registerPage.roleDescriptions.admin')}</option>
+                </select>
               </div>
             </div>
             

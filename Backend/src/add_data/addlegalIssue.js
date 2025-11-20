@@ -17,7 +17,7 @@ const run = async () => {
                 userId: citizen._id,
                 issueType: "Land Dispute",  // Match your allowed enums
                 description: `Land ownership issue reported by ${citizen.fullName}`,
-                status: "Pending",
+                status: "pending",
                 kiosk: kiosk._id,
                 assignedParalegal: paralegal ? paralegal._id : undefined,
                 isDeleted: false

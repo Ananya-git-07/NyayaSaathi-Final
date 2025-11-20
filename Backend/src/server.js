@@ -49,9 +49,9 @@ try {
     { name: 'subscriptions', path: './routes/subscriptionRoutes.js' },
     { name: 'users', path: './routes/userRoutes.js' },
     { name: 'voicequeries', path: './routes/voiceQueryRoutes.js' },
-    // --- ADD NEW ROUTES ---
-    { name: 'notifications', path: './routes/notificationRoutes.js'},
-    { name: 'messages', path: './routes/messageRoutes.js' }
+    { name: 'messages', path: './routes/messageRoutes.js' },
+    { name: 'notifications', path: './routes/notificationRoutes.js' },
+    { name: 'videosessions', path: './routes/videoSessionRoutes.js' }
   ];
 
   for (const route of routeFiles) {

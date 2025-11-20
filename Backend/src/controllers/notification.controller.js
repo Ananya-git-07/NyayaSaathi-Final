@@ -10,9 +10,8 @@ const getNotifications = asyncHandler(async (req, res) => {
     const notifications = await Notification.find({ recipient: req.user._id, isDeleted: false })
         .sort({ createdAt: -1 })
         .limit(20);
-    const unreadCount = await Notification.countDocuments({ recipient: req.user._id, isRead: false, isDeleted: false });
 
-    return res.status(200).json(new ApiResponse(200, { notifications, unreadCount }, "Notifications fetched successfully."));
+    return res.status(200).json(new ApiResponse(200, notifications, "Notifications fetched successfully."));
 });
 
 const markAsRead = asyncHandler(async (req, res) => {

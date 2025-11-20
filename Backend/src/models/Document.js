@@ -5,6 +5,9 @@ const documentSchema = new mongoose.Schema({
   issueId: { type: mongoose.Schema.Types.ObjectId, ref: 'LegalIssue', required: true },
   documentType: { type: String, required: true },
   fileUrl: { type: String, required: true },
+  publicId: { type: String },
+  resourceType: { type: String },
+  format: { type: String },
   submissionStatus: {
     type: String,
     enum: ['not_submitted', 'submitted', 'accepted', 'rejected'],

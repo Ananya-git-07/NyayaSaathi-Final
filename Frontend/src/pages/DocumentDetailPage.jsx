@@ -1,19 +1,41 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { ArrowLeft, FileText, Calendar, User, ExternalLink, Trash2, AlertCircle } from "lucide-react"
+import { ArrowLeft, FileText, Calendar, User, ExternalLink, Trash2, AlertCircle, Sparkles, CheckCircle, Clock } from "lucide-react"
 import apiClient from "../api/axiosConfig"
 import Spinner from "../components/Spinner"
 import toast from "react-hot-toast"
 import { useTranslation } from "react-i18next"
+import { summarizeLegalDocument } from "../services/legalKnowledgeService"
+import ConfirmDialog from "../components/ConfirmDialog"
+import { useConfirm } from "../hooks/useConfirm"
 
 const DocumentDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { confirmState, confirm, closeDialog } = useConfirm()
   const { t } = useTranslation()
   const [document, setDocument] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [summary, setSummary] = useState(null)
+  const [summarizing, setSummarizing] = useState(false)
+
+  const handleOpenDocument = async (docId) => {
+    try {
+      // Try to get a signed URL first
+      const response = await apiClient.get(`/documents/${docId}/signed-url`)
+      const signedUrl = response.data.data.signedUrl
+      window.open(signedUrl, '_blank', 'noopener,noreferrer')
+    } catch (err) {
+      // Fallback to direct URL if signed URL fails
+      if (document?.fileUrl) {
+        window.open(document.fileUrl, '_blank', 'noopener,noreferrer')
+      } else {
+        toast.error('Failed to open document')
+      }
+    }
+  }
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -30,15 +52,74 @@ const DocumentDetailPage = () => {
   }, [id])
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this document?")) return
+    const confirmed = await confirm({
+      title: "Delete Document?",
+      message: "Are you sure you want to delete this document? The file will be permanently removed from the system.",
+      type: "danger"
+    });
 
-    const toastId = toast.loading("Deleting document...")
+    if (!confirmed) return;
+
+    const promise = new Promise(async (resolve, reject) => {
+      try {
+        await apiClient.delete(`/documents/${id}`);
+        resolve();
+        navigate("/dashboard");
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+    toast.promise(
+      promise,
+      {
+        loading: 'Deleting document...',
+        success: 'Document deleted successfully',
+        error: (err) => `Failed to delete document: ${err.message}`,
+      }
+    );
+  }
+
+  const handleSummarize = async () => {
+    if (!document.fileUrl) {
+      toast.error("No document file available to summarize")
+      return
+    }
+
+    setSummarizing(true)
+    const toastId = toast.loading("Analyzing document with AI...")
+
     try {
-      await apiClient.delete(`/documents/${id}`)
-      toast.success("Document deleted successfully", { id: toastId })
-      navigate("/dashboard")
+      // Send document details to backend including publicId for Cloudinary API access
+      const result = await summarizeLegalDocument(
+        null, 
+        document.documentType, 
+        document.fileUrl,
+        document.publicId,
+        document.resourceType,
+        document.format
+      )
+
+      if (result.success) {
+        setSummary(result)
+        toast.success("Document analyzed successfully!", { id: toastId })
+      } else {
+        throw new Error(result.error)
+      }
     } catch (err) {
-      toast.error(`Failed to delete document: ${err.message}`, { id: toastId })
+      console.error("Summarization error:", err)
+      toast.error(`Failed to analyze document: ${err.message}`, { id: toastId })
+    } finally {
+      setSummarizing(false)
+    }
+  }
+
+  const getUrgencyColor = (urgency) => {
+    switch (urgency?.toLowerCase()) {
+      case "high": return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800"
+      case "medium": return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800"
+      case "low": return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800"
+      default: return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600"
     }
   }
 
@@ -64,6 +145,23 @@ const DocumentDetailPage = () => {
           {t('docDetail.back')}
         </button>
         <div className="flex gap-2">
+          <button 
+            onClick={handleSummarize} 
+            disabled={summarizing}
+            className="btn-primary"
+          >
+            {summarizing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Analyzing...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} />
+                <span>AI Summarize</span>
+              </>
+            )}
+          </button>
           <button onClick={handleDelete} className="btn-secondary bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/50 dark:text-red-400 dark:hover:bg-red-900">
             <Trash2 size={16} />
             {t('docDetail.delete')}
@@ -137,20 +235,91 @@ const DocumentDetailPage = () => {
                 <div>
                   <p className="text-slate-600 dark:text-slate-400 text-sm">{t('docDetail.fileAccessDesc')}</p>
                 </div>
-                <a
-                  href={document.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => handleOpenDocument(id)}
                   className="btn-primary"
                 >
                   <ExternalLink size={16} />
                   {t('docDetail.viewDoc')}
-                </a>
+                </button>
               </div>
             </div>
           </div>
+
+          {summary && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Sparkles className="text-cyan-500" size={20} />
+                  AI Document Analysis
+                </h3>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getUrgencyColor(summary.urgency)}`}>
+                  {summary.urgency?.toUpperCase() || 'MEDIUM'} URGENCY
+                </span>
+              </div>
+
+              <div className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 p-6 rounded-lg border border-cyan-200 dark:border-cyan-800">
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-cyan-900 dark:text-cyan-300 mb-2">Document Type</h4>
+                  <p className="text-slate-700 dark:text-slate-300">{summary.documentType}</p>
+                </div>
+
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-cyan-900 dark:text-cyan-300 mb-2">Summary</h4>
+                  <p className="text-slate-700 dark:text-slate-300">{summary.summary}</p>
+                </div>
+
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-cyan-900 dark:text-cyan-300 mb-2">Key Points</h4>
+                  <ul className="space-y-2">
+                    {summary.keyPoints?.map((point, index) => (
+                      <li key={index} className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                        <CheckCircle className="text-green-500 flex-shrink-0 mt-0.5" size={16} />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-cyan-900 dark:text-cyan-300 mb-2">Recommendations</h4>
+                  <ul className="space-y-2">
+                    {summary.recommendations?.map((rec, index) => (
+                      <li key={index} className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                        <ArrowLeft className="text-blue-500 flex-shrink-0 mt-0.5 rotate-180" size={16} />
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {summary.nextSteps && (
+                  <div className="bg-white/50 dark:bg-slate-800/50 p-4 rounded-lg border border-cyan-200 dark:border-cyan-800">
+                    <h4 className="text-sm font-semibold text-cyan-900 dark:text-cyan-300 mb-2 flex items-center gap-2">
+                      <Clock size={16} />
+                      Next Steps
+                    </h4>
+                    <p className="text-slate-700 dark:text-slate-300">{summary.nextSteps}</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        onClose={closeDialog}
+        onConfirm={confirmState.onConfirm}
+        title={confirmState.title}
+        message={confirmState.message}
+        type={confirmState.type}
+      />
     </motion.div>
   )
 }

@@ -8,4 +8,14 @@ export default defineConfig({
     react(),
     tailwindcss(), // The new Vite plugin handles everything
   ],
+  // Development server proxy: forward /api requests to backend
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 })

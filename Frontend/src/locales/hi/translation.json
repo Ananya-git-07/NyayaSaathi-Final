@@ -2,6 +2,8 @@
   "nav": {
     "home": "होम",
     "dashboard": "डैशबोर्ड",
+    "paralegalDashboard": "पैरालीगल डैशबोर्ड",
+    "employeeDashboard": "कर्मचारी डैशबोर्ड",
     "profile": "प्रोफ़ाइल",
     "adminPanel": "एडमिन पैनल",
     "logout": "लॉगआउट",
@@ -327,5 +329,80 @@
         "desc": "जटिल मामलों को विशेषज्ञ मदद के लिए स्थानीय पैरालीगल के हमारे नेटवर्क पर बुद्धिमानी से भेजा जाता है।"
       }
     }
+  },
+  "notFound": {
+    "title": "404",
+    "heading": "पृष्ठ नहीं मिला",
+    "message": "क्षमा करें, आप जिस पृष्ठ की तलाश कर रहे हैं वह मौजूद नहीं है।",
+    "goHome": "होम पर जाएं"
+  },
+  "adminPage": {
+    "title": "एडमिन पैनल",
+    "overview": "अवलोकन",
+    "totalUsers": "कुल उपयोगकर्ता",
+    "totalIssues": "कुल मुद्दे",
+    "totalDocuments": "कुल दस्तावेज़",
+    "totalKiosks": "कुल कियोस्क",
+    "issuesTrend": "मुद्दे बनाए गए (पिछले 30 दिन)",
+    "issueTypeDistribution": "मुद्दा प्रकार वितरण",
+    "manageData": "डेटा प्रबंधित करें",
+    "selectCategory": "प्रबंधित करने के लिए एक श्रेणी चुनें",
+    "categories": {
+      "users": "उपयोगकर्ता",
+      "admins": "एडमिन",
+      "employees": "कर्मचारी",
+      "paralegals": "पैरालीगल",
+      "kiosks": "कियोस्क",
+      "subscriptions": "सदस्यता",
+      "issues": "मुद्दे",
+      "documents": "दस्तावेज़",
+      "voiceQueries": "आवाज प्रश्न"
+    },
+    "actions": {
+      "add": "जोड़ें",
+      "edit": "संपादित करें",
+      "delete": "हटाएं",
+      "assign": "पैरालीगल असाइन करें",
+      "confirmDelete": "क्या आप वाकई इस आइटम को हटाना चाहते हैं?",
+      "deleteSuccess": "आइटम सफलतापूर्वक हटा दिया गया",
+      "deleteError": "आइटम हटाने में विफल"
+    },
+    "table": {
+      "loading": "लोड हो रहा है...",
+      "noData": "कोई डेटा उपलब्ध नहीं है",
+      "actions": "क्रियाएं"
+    }
+  },
+  "paralegalDashboard": {
+    "welcome": "स्वागत है",
+    "noSpecialization": "कोई विशेषज्ञता निर्धारित नहीं",
+    "phoneNumber": "फोन",
+    "stats": {
+      "totalCases": "कुल मामले",
+      "pending": "लंबित",
+      "inProgress": "प्रगति में",
+      "resolved": "समाधान किया गया"
+    },
+    "urgentCases": "तत्काल मामला",
+    "urgentCasesPlural": "तत्काल मामले",
+    "requireAttention": "ध्यान देने की आवश्यकता है",
+    "urgentCasesDesc": "ये मामले 7 दिनों से अधिक समय से लंबित हैं।",
+    "assignedCases": "सौंपे गए मामले",
+    "filters": {
+      "all": "सभी",
+      "pending": "लंबित",
+      "inProgress": "प्रगति में"
+    },
+    "noCasesFound": "कोई मामला नहीं मिला",
+    "recentActivity": "हाल की गतिविधि",
+    "noRecentActivity": "कोई हाल की गतिविधि नहीं",
+    "priority": {
+      "high": "उच्च प्राथमिकता",
+      "medium": "मध्यम प्राथमिकता",
+      "low": "कम प्राथमिकता"
+    },
+    "accessDenied": "पहुंच अस्वीकृत",
+    "accessDeniedDesc": "केवल पैरालीगल इस डैशबोर्ड तक पहुंच सकते हैं।",
+    "goToDashboard": "डैशबोर्ड पर जाएं"
   }
 }

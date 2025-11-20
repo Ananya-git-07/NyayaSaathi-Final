@@ -20,7 +20,12 @@ import AdminPanelPage from "./pages/AdminPanelPage"
 import IssueDetailPage from "./pages/IssueDetailPage"
 import DocumentDetailPage from "./pages/DocumentDetailPage"
 import LegalHelpPage from "./pages/legal-help/LegalHelpPage"
+import ParalegalDashboardPage from "./pages/ParalegalDashboardPage"
+import EmployeeDashboardPage from "./pages/EmployeeDashboardPage"
 import NotFoundPage from "./pages/NotFoundPage"
+import KnowledgeBasePage from "./pages/KnowledgeBasePage"
+import VideoSessionsPage from "./pages/VideoSessionsPage"
+import VideoCallPage from "./pages/VideoCallPage"
 
 const ProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -32,6 +37,16 @@ const ProtectedRoute = () => {
 const AdminRoute = () => {
   const { user } = useAuth()
   return user?.role === "admin" ? <Outlet /> : <Navigate to="/dashboard" replace />
+}
+
+const ParalegalRoute = () => {
+  const { user } = useAuth()
+  return user?.role === "paralegal" ? <Outlet /> : <Navigate to="/dashboard" replace />
+}
+
+const EmployeeRoute = () => {
+  const { user } = useAuth()
+  return user?.role === "employee" ? <Outlet /> : <Navigate to="/dashboard" replace />
 }
 
 function App() {
@@ -61,10 +76,21 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage openAssistant={openAssistant} />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/issues/:id" element={<IssueDetailPage />} />
+            <Route path="/issue/:id" element={<IssueDetailPage />} />
             <Route path="/documents/:id" element={<DocumentDetailPage />} />
+            <Route path="/video-sessions" element={<VideoSessionsPage />} />
+            <Route path="/video-call/:sessionId" element={<VideoCallPage />} />
 
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={<AdminPanelPage />} />
+            </Route>
+
+            <Route element={<ParalegalRoute />}>
+              <Route path="/paralegal-dashboard" element={<ParalegalDashboardPage />} />
+            </Route>
+
+            <Route element={<EmployeeRoute />}>
+              <Route path="/employee-dashboard" element={<EmployeeDashboardPage />} />
             </Route>
           </Route>
 

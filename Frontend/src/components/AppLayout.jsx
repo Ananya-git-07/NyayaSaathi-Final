@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext"
 import Footer from "./Footer"
 import LanguageSwitcher from "./LanguageSwitcher"
 import ThemeSwitcher from "./ThemeSwitcher"
+import NotificationBell from "./NotificationBell"
 import { Scale, Menu, X } from 'lucide-react'
 import { useState } from "react"
 
@@ -55,8 +56,15 @@ const AppLayout = () => {
 
                 {isAuthenticated ? (
                   <>
-                    <NavLink to="/dashboard" className={navLinkClass}>{t("nav.dashboard")}</NavLink>
+                    {user?.role === "paralegal" ? (
+                      <NavLink to="/paralegal-dashboard" className={navLinkClass}>{t("nav.paralegalDashboard")}</NavLink>
+                    ) : user?.role === "employee" ? (
+                      <NavLink to="/employee-dashboard" className={navLinkClass}>{t("nav.employeeDashboard")}</NavLink>
+                    ) : (
+                      <NavLink to="/dashboard" className={navLinkClass}>{t("nav.dashboard")}</NavLink>
+                    )}
                     <NavLink to="/legal-help" className={navLinkClass}>{t("nav.legalHelp")}</NavLink>
+                    <NavLink to="/video-sessions" className={navLinkClass}>Video Consultation</NavLink>
                     <NavLink to="/profile" className={navLinkClass}>{t("nav.profile")}</NavLink>
                     {user?.role === "admin" && (
                       <NavLink to="/admin" className={navLinkClass}>{t("nav.adminPanel")}</NavLink>
@@ -78,12 +86,14 @@ const AppLayout = () => {
               </div>
 
               <div className="flex items-center gap-2 pl-4 border-l border-slate-200 dark:border-slate-700">
+                {isAuthenticated && <NotificationBell />}
                 <LanguageSwitcher />
                 <ThemeSwitcher />
               </div>
             </div>
 
             <div className="md:hidden flex items-center gap-2">
+              {isAuthenticated && <NotificationBell />}
               <LanguageSwitcher />
               <ThemeSwitcher />
               <button
@@ -102,8 +112,15 @@ const AppLayout = () => {
 
                 {isAuthenticated ? (
                   <>
-                    <NavLink to="/dashboard" className={mobileNavLinkClass} onClick={() => setIsMobileMenuOpen(false)}>{t("nav.dashboard")}</NavLink>
+                    {user?.role === "paralegal" ? (
+                      <NavLink to="/paralegal-dashboard" className={mobileNavLinkClass} onClick={() => setIsMobileMenuOpen(false)}>{t("nav.paralegalDashboard")}</NavLink>
+                    ) : user?.role === "employee" ? (
+                      <NavLink to="/employee-dashboard" className={mobileNavLinkClass} onClick={() => setIsMobileMenuOpen(false)}>{t("nav.employeeDashboard")}</NavLink>
+                    ) : (
+                      <NavLink to="/dashboard" className={mobileNavLinkClass} onClick={() => setIsMobileMenuOpen(false)}>{t("nav.dashboard")}</NavLink>
+                    )}
                     <NavLink to="/legal-help" className={mobileNavLinkClass} onClick={() => setIsMobileMenuOpen(false)}>{t("nav.legalHelp")}</NavLink>
+                    <NavLink to="/video-sessions" className={mobileNavLinkClass} onClick={() => setIsMobileMenuOpen(false)}>Video Consultation</NavLink>
                     <NavLink to="/profile" className={mobileNavLinkClass} onClick={() => setIsMobileMenuOpen(false)}>{t("nav.profile")}</NavLink>
 
                     {user?.role === "admin" && (

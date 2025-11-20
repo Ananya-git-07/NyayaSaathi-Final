@@ -23,6 +23,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import toast from "react-hot-toast"
 import { useAuth } from "../context/AuthContext"
 import { useTranslation } from "react-i18next"
+import ConfirmDialog from "../components/ConfirmDialog"
+import { useConfirm } from "../hooks/useConfirm"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -54,6 +56,7 @@ const DashboardPage = () => {
   const { user } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { confirmState, confirm, closeDialog } = useConfirm()
   const [data, setData] = useState({ issues: [], documents: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -84,20 +87,54 @@ const DashboardPage = () => {
 
   const handleDelete = async (type, id) => {
     const itemType = type === "issues" ? "issue" : "document";
-    if (!window.confirm(`Are you sure you want to delete this ${itemType}?`)) return;
+    
+    const confirmed = await confirm({
+      title: `Delete ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}?`,
+      message: `Are you sure you want to delete this ${itemType}? This action cannot be undone.`,
+      type: "danger"
+    });
 
-    const toastId = toast.loading(`Deleting ${itemType}...`);
-    try {
-      await apiClient.delete(`/${type}/${id}`);
-      toast.success(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} deleted successfully.`, { id: toastId });
-      fetchData();
-    } catch (err) {
-      toast.error(`Failed to delete ${itemType}: ${err.message}`, { id: toastId });
-    }
+    if (!confirmed) return;
+    
+    const promise = new Promise(async (resolve, reject) => {
+      try {
+        await apiClient.delete(`/${type}/${id}`);
+        await fetchData();
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+    toast.promise(
+      promise,
+      {
+        loading: `Deleting ${itemType}...`,
+        success: `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} deleted successfully`,
+        error: (err) => `Failed to delete ${itemType}: ${err.message}`,
+      }
+    );
   };
 
   const handleViewDetails = (type, id) => {
     navigate(`/${type}/${id}`);
+  };
+
+  const handleOpenDocument = async (docId) => {
+    try {
+      // Try to get a signed URL first
+      const response = await apiClient.get(`/documents/${docId}/signed-url`)
+      const signedUrl = response.data.data.signedUrl
+      window.open(signedUrl, '_blank', 'noopener,noreferrer')
+    } catch (err) {
+      // Fallback to direct URL if signed URL fails
+      const doc = data.documents.find(d => d._id === docId)
+      if (doc?.fileUrl) {
+        window.open(doc.fileUrl, '_blank', 'noopener,noreferrer')
+      } else {
+        toast.error('Failed to open document')
+      }
+    }
   };
 
   const getStatusColor = (status) => {
@@ -144,22 +181,24 @@ const DashboardPage = () => {
               <h2 className="text-2xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <AlertCircle size={24} className="text-cyan-600 dark:text-cyan-400" /> {t('dashboardPage.issuesTitle')}
               </h2>
-              <button onClick={() => setAddIssueModalOpen(true)} className="btn-secondary flex items-center gap-2">
-                <Plus size={16} /> {t('dashboardPage.addIssue')}
-              </button>
+              {user?.role === 'citizen' && (
+                <button onClick={() => setAddIssueModalOpen(true)} className="btn-secondary flex items-center gap-2">
+                  <Plus size={16} /> {t('dashboardPage.addIssue')}
+                </button>
+              )}
             </div>
             {data.issues.length > 0 ? (
               <div className="space-y-4">
                 <AnimatePresence>
                   {data.issues.map((issue) => (
-                    <motion.div layout key={issue._id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all group">
+                    <motion.div layout key={issue._id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all group overflow-hidden">
                       <div className="flex justify-between items-start">
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-bold text-slate-900 dark:text-white text-lg">{issue.issueType}</h3>
                             <span className={`text-xs px-3 py-1 rounded-full border ${getStatusColor(issue.status)}`}>{issue.status}</span>
                           </div>
-                          <p className="text-slate-700 dark:text-slate-300 mb-3 line-clamp-2">{issue.description}</p>
+                          <p className="text-slate-700 dark:text-slate-300 mb-3 line-clamp-2 break-words overflow-wrap-anywhere">{issue.description}</p>
                           <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
                             <span className="flex items-center gap-1"><Calendar size={14} />{new Date(issue.createdAt).toLocaleDateString()}</span>
                             {issue.kiosk && <span className="flex items-center gap-1"><MapPin size={14} />{issue.kiosk.location}</span>}
@@ -188,9 +227,11 @@ const DashboardPage = () => {
               <h2 className="text-2xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <FileText size={24} className="text-cyan-600 dark:text-cyan-400" /> {t('dashboardPage.documentsTitle')}
               </h2>
-              <button onClick={() => setAddDocumentModalOpen(true)} className="btn-secondary flex items-center gap-2">
-                <Plus size={16} /> {t('dashboardPage.addDocument')}
-              </button>
+              {user?.role === 'citizen' && (
+                <button onClick={() => setAddDocumentModalOpen(true)} className="btn-secondary flex items-center gap-2">
+                  <Plus size={16} /> {t('dashboardPage.addDocument')}
+                </button>
+              )}
             </div>
             {data.documents.length > 0 ? (
               <div className="space-y-4">
@@ -212,7 +253,7 @@ const DashboardPage = () => {
                               <span className="flex items-center gap-1"><Calendar size={14} />{new Date(doc.createdAt).toLocaleDateString()}</span>
                             </div>
                             <div className="mt-3 flex gap-4 flex-wrap">
-                              <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-500 text-sm font-medium whitespace-nowrap"><ExternalLink size={14} /> {t('dashboardPage.openFile')}</a>
+                              <button onClick={() => handleOpenDocument(doc._id)} className="flex items-center gap-1 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-500 text-sm font-medium whitespace-nowrap"><ExternalLink size={14} /> {t('dashboardPage.openFile')}</button>
                               <button onClick={() => handleViewDetails("documents", doc._id)} className="flex items-center gap-1 text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-500 text-sm font-medium whitespace-nowrap"><Eye size={14} /> {t('dashboardPage.viewDetails')}</button>
                             </div>
                           </div>
@@ -234,6 +275,15 @@ const DashboardPage = () => {
 
       <AddIssueModal isOpen={isAddIssueModalOpen} onClose={() => setAddIssueModalOpen(false)} onSuccess={fetchData} />
       <AddDocumentModal isOpen={isAddDocumentModalOpen} onClose={() => setAddDocumentModalOpen(false)} onSuccess={fetchData} issues={data.issues} />
+      
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        onClose={closeDialog}
+        onConfirm={confirmState.onConfirm}
+        title={confirmState.title}
+        message={confirmState.message}
+        type={confirmState.type}
+      />
     </>
   )
 }

@@ -16,6 +16,8 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
     const navigate = useNavigate();
 
     const logout = useCallback(async () => {
@@ -27,6 +29,8 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem('accessToken'); 
             setUser(null);
             setIsAuthenticated(false);
+            setNotifications([]);
+            setUnreadCount(0);
             navigate('/login', { replace: true });
         }
     }, [navigate]);
@@ -56,6 +60,31 @@ export const AuthProvider = ({ children }) => {
         };
         checkAuthStatus();
     }, [logout]);
+
+    // Fetch notifications when user is authenticated
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            if (!isAuthenticated || !user) return;
+            
+            try {
+                const response = await apiClient.get('/notifications');
+                if (response.data?.success) {
+                    const notifs = response.data.data || [];
+                    setNotifications(notifs);
+                    setUnreadCount(notifs.filter(n => !n.isRead).length);
+                }
+            } catch (error) {
+                console.error("Failed to fetch notifications:", error);
+            }
+        };
+
+        fetchNotifications();
+        
+        // Poll for new notifications every 30 seconds
+        const interval = setInterval(fetchNotifications, 30000);
+        
+        return () => clearInterval(interval);
+    }, [isAuthenticated, user]);
     
     const login = async (email, password) => {
         const response = await apiClient.post('/auth/login', { email, password });
@@ -127,7 +156,21 @@ export const AuthProvider = ({ children }) => {
         );
     }
 
-    const value = { user, setUser,  isAuthenticated, isLoading, login, logout, register, updateAvatar, deleteAvatar };
+    const value = { 
+        user, 
+        setUser, 
+        isAuthenticated, 
+        isLoading, 
+        login, 
+        logout, 
+        register, 
+        updateAvatar, 
+        deleteAvatar,
+        notifications,
+        setNotifications,
+        unreadCount,
+        setUnreadCount
+    };
 
     return (
         <AuthContext.Provider value={value}>

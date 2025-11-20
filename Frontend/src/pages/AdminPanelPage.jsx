@@ -1,9 +1,10 @@
 // PASTE THIS ENTIRE FILE INTO src/pages/AdminPanelPage.jsx
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import apiClient from '../api/axiosConfig';
 import Spinner from '../components/Spinner';
-import { Plus, Edit, Users, FileText, Home, Trash2 } from 'lucide-react';
+import { Plus, Edit, Users, FileText, Home, Trash2, UserPlus } from 'lucide-react';
 import { Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, Filler } from 'chart.js';
 import toast from 'react-hot-toast';
@@ -11,6 +12,7 @@ import toast from 'react-hot-toast';
 import AddKioskModal from '../components/AddKioskModal.jsx';
 import AddSubscriptionModal from '../components/AddSubscriptionModal.jsx';
 import GenericEditModal from '../components/GenericEditModal.jsx';
+import AssignParalegalModal from '../components/AssignParalegalModal.jsx';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, Filler);
 
@@ -21,7 +23,12 @@ const columnsConfig = {
     paralegals: [ { header: 'Name', accessor: (item) => item.user?.fullName || 'N/A' }, { header: 'Email', accessor: (item) => item.user?.email || 'N/A' }, { header: 'Rating', accessor: 'rating' } ],
     kiosks: [ { header: 'Location', accessor: 'location' }, { header: 'Village', accessor: 'village' }, { header: 'Operator', accessor: 'operatorName' }, { header: 'Active', accessor: (item) => String(item.isActive) } ],
     subscriptions: [ { header: 'Org Type', accessor: 'organizationType' }, { header: 'Plan', accessor: 'plan' }, { header: 'Expires On', accessor: (item) => new Date(item.expiryDate).toLocaleDateString() } ],
-    issues: [ { header: 'Issue Type', accessor: 'issueType' }, { header: 'Status', accessor: 'status' }, { header: 'User', accessor: 'userId.fullName' } ],
+    issues: [ 
+        { header: 'Issue Type', accessor: 'issueType' }, 
+        { header: 'Status', accessor: 'status' }, 
+        { header: 'User', accessor: 'userId.fullName' },
+        { header: 'Assigned To', accessor: (item) => item.assignedParalegal?.user?.fullName || 'Unassigned' }
+    ],
     documents: [ { header: 'Doc Type', accessor: 'documentType' }, { header: 'Status', accessor: 'submissionStatus' }, { header: 'User ID', accessor: 'userId' } ],
     voicequeries: [ { header: 'Language', accessor: 'language' }, { header: 'User ID', accessor: 'userId' }, { header: 'Text', accessor: 'transcribedText' } ],
 };
@@ -42,6 +49,7 @@ const StatCard = ({ icon, title, value, color }) => (
 );
   
 const AdminOverview = () => {
+    const { t } = useTranslation();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -62,7 +70,7 @@ const AdminOverview = () => {
   
     if (loading) return <Spinner />;
     if (error) return <div className="text-red-600 p-4 bg-red-50 rounded-lg">{error}</div>;
-    if (!stats) return <div>No stats available.</div>;
+    if (!stats) return <div>{t('adminPage.table.noData')}</div>;
   
     const lineChartData = {
       labels: stats.issuesLast30Days.map(d => new Date(d._id).toLocaleDateString()),
@@ -95,17 +103,17 @@ const AdminOverview = () => {
     return (
       <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard icon={<Users size={24} />} title="Total Users" value={stats.keyMetrics.totalUsers} color="bg-cyan-100 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400" />
-          <StatCard icon={<FileText size={24} />} title="Total Legal Issues" value={stats.keyMetrics.totalIssues} color="bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400" />
-          <StatCard icon={<Home size={24} />} title="Total Kiosks" value={stats.keyMetrics.totalKiosks} color="bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400" />
+          <StatCard icon={<Users size={24} />} title={t('adminPage.totalUsers')} value={stats.keyMetrics.totalUsers} color="bg-cyan-100 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400" />
+          <StatCard icon={<FileText size={24} />} title={t('adminPage.totalIssues')} value={stats.keyMetrics.totalIssues} color="bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400" />
+          <StatCard icon={<Home size={24} />} title={t('adminPage.totalKiosks')} value={stats.keyMetrics.totalKiosks} color="bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-3 bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Issues (Last 30 Days)</h3>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">{t('adminPage.issuesTrend')}</h3>
             <div className="h-64"><Line data={lineChartData} options={commonChartOptions} /></div>
           </div>
           <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Issue Types</h3>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">{t('adminPage.issueTypeDistribution')}</h3>
             <div className="h-64"><Doughnut data={doughnutChartData} options={{...commonChartOptions, scales: {}}} /></div>
           </div>
         </div>
@@ -114,14 +122,20 @@ const AdminOverview = () => {
 };
 
 const AdminPanelPage = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('overview');
   const [editingItem, setEditingItem] = useState(null);
   const [isAddKioskModalOpen, setAddKioskModalOpen] = useState(false);
   const [isAddSubModalOpen, setAddSubModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [issueToAssign, setIssueToAssign] = useState(null);
 
   const tabs = ['overview', ...Object.keys(columnsConfig)];
-  const tabName = (tab) => tab.charAt(0).toUpperCase() + tab.slice(1);
+  const tabName = (tab) => {
+    if (tab === 'overview') return t('adminPage.overview');
+    const key = tab.replace(/s$/, ''); // Remove plural 's'
+    return t(`adminPage.categories.${tab}`, tab.charAt(0).toUpperCase() + tab.slice(1));
+  };
   const canCreate = ['kiosks', 'subscriptions'].includes(activeTab);
   const canEdit = !['subscriptions', 'voicequeries', 'overview'].includes(activeTab);
 
@@ -144,10 +158,10 @@ const AdminPanelPage = () => {
     <>
       <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         <div className="flex flex-wrap justify-between items-center gap-4">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Admin Panel</h1>
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white">{t('adminPage.title')}</h1>
           {canCreate && (
             <button onClick={handleCreateClick} className="btn-primary w-auto">
-              <Plus size={16} /> Create New {tabName(activeTab).slice(0, -1)}
+              <Plus size={16} /> {t('adminPage.actions.add')} {tabName(activeTab).slice(0, -1)}
             </button>
           )}
         </div>
@@ -169,6 +183,7 @@ const AdminPanelPage = () => {
               title={tabName(activeTab)}
               columns={columnsConfig[activeTab]}
               onEdit={canEdit ? handleEditClick : null}
+              onAssign={activeTab === 'issues' ? setIssueToAssign : null}
               key={activeTab}
             />
           )}
@@ -188,11 +203,23 @@ const AdminPanelPage = () => {
             title={`Edit ${tabName(activeTab).slice(0, -1)}`}
           />
       )}
+      {issueToAssign && (
+        <AssignParalegalModal
+          isOpen={true}
+          onClose={() => setIssueToAssign(null)}
+          issueId={issueToAssign._id}
+          currentAssignment={issueToAssign.assignedParalegal}
+          onAssignmentSuccess={() => {
+            setIssueToAssign(null);
+            forceRerender('issues');
+          }}
+        />
+      )}
     </>
   );
 };
 
-const DataTable = ({ endpoint, title, columns, onEdit }) => {
+const DataTable = ({ endpoint, title, columns, onEdit, onAssign }) => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -215,15 +242,32 @@ const DataTable = ({ endpoint, title, columns, onEdit }) => {
     }, [endpoint, title]);
   
     const handleDelete = async (id) => {
-      if (window.confirm(`Are you sure you want to delete this ${title.slice(0, -1)}?`)) {
+      const confirmed = await confirm({
+        title: `Delete ${title.slice(0, -1)}?`,
+        message: `Are you sure you want to delete this ${title.slice(0, -1).toLowerCase()}? This action cannot be undone.`,
+        type: "danger"
+      });
+
+      if (!confirmed) return;
+
+      const promise = new Promise(async (resolve, reject) => {
         try {
           await apiClient.delete(`${endpoint}/${id}`);
           setData(prevData => prevData.filter(item => item._id !== id));
-          toast.success(`${title.slice(0, -1)} deleted successfully.`);
+          resolve();
         } catch (err) {
-          toast.error(`Failed to delete: ${err.response?.data?.message || err.message}`);
+          reject(err);
         }
-      }
+      });
+
+      toast.promise(
+        promise,
+        {
+          loading: `Deleting ${title.slice(0, -1)}...`,
+          success: `${title.slice(0, -1)} deleted successfully`,
+          error: (err) => `Failed to delete: ${err.response?.data?.message || err.message}`,
+        }
+      );
     };
   
     if (loading) return <div className="text-center p-8"><Spinner /></div>;
@@ -251,6 +295,15 @@ const DataTable = ({ endpoint, title, columns, onEdit }) => {
                     </td>
                   ))}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-4">
+                    {onAssign && (
+                      <button 
+                        onClick={() => onAssign(item)} 
+                        className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
+                        title={item.assignedParalegal ? 'Reassign Paralegal' : 'Assign Paralegal'}
+                      >
+                        <UserPlus size={14}/>
+                      </button>
+                    )}
                     {onEdit && <button onClick={() => onEdit(item)} className="text-cyan-600 hover:text-cyan-800 dark:text-cyan-400 dark:hover:text-cyan-300"><Edit size={14}/></button>}
                     <button onClick={() => handleDelete(item._id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><Trash2 size={14}/></button>
                   </td>
@@ -259,6 +312,15 @@ const DataTable = ({ endpoint, title, columns, onEdit }) => {
             </tbody>
           </table>
         </div>
+
+        <ConfirmDialog
+          isOpen={confirmState.isOpen}
+          onClose={closeDialog}
+          onConfirm={confirmState.onConfirm}
+          title={confirmState.title}
+          message={confirmState.message}
+          type={confirmState.type}
+        />
       </div>
     );
 };

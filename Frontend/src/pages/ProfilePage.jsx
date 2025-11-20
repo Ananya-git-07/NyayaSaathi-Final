@@ -10,9 +10,12 @@ import { User, Mail, ShieldCheck, Phone, Edit, Save, X, Loader2, Upload, Trash2 
 import toast from "react-hot-toast"
 import { useAuth } from "../context/AuthContext"
 import { useTranslation } from "react-i18next"
+import ConfirmDialog from "../components/ConfirmDialog"
+import { useConfirm } from "../hooks/useConfirm"
 
 const ProfilePage = () => {
   const { user, setUser, updateAvatar, deleteAvatar } = useAuth()
+  const { confirmState, confirm, closeDialog } = useConfirm()
   const { t } = useTranslation()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -45,10 +48,32 @@ const ProfilePage = () => {
     }
   };
 
-  const handleAvatarDelete = () => {
-    if (window.confirm("Are you sure you want to remove your profile picture?")) {
-        deleteAvatar();
-    }
+  const handleAvatarDelete = async () => {
+    const confirmed = await confirm({
+      title: "Remove Profile Picture?",
+      message: "Are you sure you want to remove your profile picture? You can always upload a new one later.",
+      type: "warning"
+    });
+
+    if (!confirmed) return;
+
+    const promise = new Promise(async (resolve, reject) => {
+      try {
+        await deleteAvatar();
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    toast.promise(
+      promise,
+      {
+        loading: 'Removing profile picture...',
+        success: 'Profile picture removed successfully',
+        error: 'Failed to remove profile picture',
+      }
+    );
   };
 
   const handlePasswordChange = (e) => {
@@ -98,7 +123,8 @@ const ProfilePage = () => {
   if (!profile) return <div>Profile data not found.</div>
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-4xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-4xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 py-8">
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
@@ -170,6 +196,16 @@ const ProfilePage = () => {
         </form>
       </div>
     </motion.div>
+
+    <ConfirmDialog
+      isOpen={confirmState.isOpen}
+      onClose={closeDialog}
+      onConfirm={confirmState.onConfirm}
+      title={confirmState.title}
+      message={confirmState.message}
+      type={confirmState.type}
+    />
+    </>
   )
 }
 

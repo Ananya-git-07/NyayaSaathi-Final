@@ -33,60 +33,88 @@ const DocumentSummarizer = () => {
     }
 
     setIsProcessing(true)
+    const toastId = toast.loading(i18n.language === "hi" ? "दस्तावेज़ का विश्लेषण किया जा रहा है..." : "Analyzing document...")
 
     try {
-      // Simulate document processing
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      let documentText = text;
+      let imageBase64 = null;
+      let imageMimeType = null;
+      
+      // If image file is uploaded, convert to base64
+      if (file && file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        const base64Promise = new Promise((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+        });
+        reader.readAsDataURL(file);
+        const dataUrl = await base64Promise;
+        imageBase64 = dataUrl.split(',')[1]; // Remove data:image/png;base64, prefix
+        imageMimeType = file.type;
+      } else if (file && file.type === "application/pdf") {
+        toast.error(i18n.language === "hi" ? "PDF फ़ाइलों के लिए, कृपया टेक्स्ट बॉक्स में सामग्री कॉपी-पेस्ट करें" : "For PDF files, please copy-paste content into the text box", { id: toastId });
+        setIsProcessing(false);
+        return;
+        }
+      }
 
-      const mockSummary =
-        i18n.language === "hi"
-          ? `**दस्तावेज़ सारांश:**
+      // Validate that we have either text or image
+      if (!imageBase64 && (!documentText || documentText.trim().length < 50)) {
+        toast.error(i18n.language === "hi" ? "कृपया कम से कम 50 वर्णों का टेक्स्ट दर्ज करें या एक इमेज अपलोड करें" : "Please enter at least 50 characters of text or upload an image", { id: toastId });
+        setIsProcessing(false);
+        return;
+      }
 
-यह एक कानूनी दस्तावेज़ है जिसमें निम्नलिखित मुख्य बिंदु हैं:
+      // Call the AI API
+      const requestBody = {
+        documentType: "Legal Document"
+      };
+      
+      if (imageBase64) {
+        requestBody.imageBase64 = imageBase64;
+        requestBody.imageMimeType = imageMimeType;
+      }
+      
+      if (documentText && documentText.trim()) {
+        requestBody.documentText = documentText;
+      }
 
-1. **मुकदमे का विवरण**: यह एक सिविल मामला है
-2. **पक्षकार**: वादी और प्रतिवादी की जानकारी
-3. **मुख्य मुद्दे**: संपत्ति विवाद से संबंधित
-4. **कानूनी आधार**: भारतीय संविदा अधिनियम के तहत
-5. **अगली सुनवाई**: अदालत में उपस्थिति आवश्यक
+      const response = await fetch('http://localhost:5001/api/ai/summarize-document', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(requestBody)
+      });
 
-**सुझाव**: एक वकील से सलाह लें और सभी आवश्यक दस्तावेज़ तैयार रखें।`
-          : `**Document Summary:**
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to summarize document');
+      }
 
-This is a legal document containing the following key points:
+      const data = await response.json();
+      const result = data.data;
 
-1. **Case Details**: This is a civil matter
-2. **Parties**: Information about plaintiff and defendant
-3. **Main Issues**: Related to property dispute
-4. **Legal Basis**: Under Indian Contract Act
-5. **Next Hearing**: Court appearance required
+      // Format summary with proper structure
+      const formattedSummary = `**${i18n.language === "hi" ? "दस्तावेज़ प्रकार" : "Document Type"}:** ${result.documentType}
 
-**Recommendation**: Consult with a lawyer and prepare all necessary documents.`
+**${i18n.language === "hi" ? "सारांश" : "Summary"}:**
+${result.summary}
 
-      const mockKeyPoints =
-        i18n.language === "hi"
-          ? [
-              "अदालत में उपस्थिति अनिवार्य है",
-              "सभी संबंधित दस्तावेज़ लाएं",
-              "वकील की सलाह लें",
-              "समय सीमा का ध्यान रखें",
-              "गवाहों की व्यवस्था करें",
-            ]
-          : [
-              "Court appearance is mandatory",
-              "Bring all relevant documents",
-              "Consult with a lawyer",
-              "Mind the time limits",
-              "Arrange for witnesses",
-            ]
+**${i18n.language === "hi" ? "तात्कालिकता" : "Urgency"}:** ${result.urgency?.toUpperCase() || 'MEDIUM'}
 
-      setSummary(mockSummary)
-      setKeyPoints(mockKeyPoints)
-      toast.success(i18n.language === "hi" ? "दस्तावेज़ का सारांश तैयार हो गया" : "Document summary generated")
+**${i18n.language === "hi" ? "अगले कदम" : "Next Steps"}:**
+${result.nextSteps || 'Review carefully and consult legal professional'}`;
+
+      setSummary(formattedSummary);
+      setKeyPoints(result.keyPoints || result.recommendations || []);
+      toast.success(i18n.language === "hi" ? "दस्तावेज़ का सारांश तैयार हो गया" : "Document summary generated", { id: toastId });
     } catch (error) {
-      toast.error(i18n.language === "hi" ? "सारांश बनाने में त्रुटि" : "Error generating summary")
+      console.error('Summarization error:', error);
+      toast.error(i18n.language === "hi" ? `सारांश बनाने में त्रुटि: ${error.message}` : `Error generating summary: ${error.message}`, { id: toastId });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
   }
 

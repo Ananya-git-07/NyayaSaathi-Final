@@ -29,7 +29,7 @@ for (let i = 0; i < issues.length; i++) {
     userId: assignedUser._id,
     issueType: issues[i].issueType,
     description: issues[i].description,
-    status: "Pending"
+    status: "pending"
   });
 
   await issue.save();

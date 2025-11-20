@@ -117,7 +117,7 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess, issues = [] }) => {
             <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                    <FileText className="text-blue-600 dark:text-blue-400" size={20} />
+                    <FileText className="text-indigo-600 dark:text-indigo-400" size={20} />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t("addDocModal.title")}</h3>
               </div>
@@ -160,11 +160,11 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess, issues = [] }) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("addDocModal.docFileLabel")}</label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-lg hover:border-cyan-500 dark:hover:border-cyan-400 transition-colors">
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-lg hover:border-purple-500 dark:hover:border-purple-400 transition-colors">
                     <div className="space-y-1 text-center">
                       <UploadCloud className="mx-auto h-12 w-12 text-slate-400" />
                       <div className="flex text-sm text-slate-600 dark:text-slate-400">
-                        <label htmlFor="file-upload" className="relative cursor-pointer bg-white dark:bg-slate-800 rounded-md font-medium text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-500 focus-within:outline-none">
+                        <label htmlFor="file-upload" className="relative cursor-pointer bg-white dark:bg-slate-800 rounded-md font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-500 focus-within:outline-none">
                           <span>{t("addDocModal.uploadFile")}</span>
                           <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" />
                         </label>

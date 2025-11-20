@@ -10,7 +10,8 @@ const historyEventSchema = new mongoose.Schema({
       'Document Uploaded', 
       'Status Changed', 
       'Assigned to Paralegal', 
-      'Note Added'
+      'Note Added',
+      'Issue Updated'
     ]
   },
   timestamp: { type: Date, default: Date.now },
@@ -20,16 +21,22 @@ const historyEventSchema = new mongoose.Schema({
 
 const legalIssueSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  title: { type: String, trim: true },
   issueType: {
     type: String,
     enum: ["Aadhaar Issue", "Pension Issue", "Land Dispute", "Court Summon", "Certificate Missing", "Fraud Case", "Other"],
     required: true
   },
   description: String,
+  urgency: {
+    type: String,
+    enum: ["low", "medium", "high"],
+    default: "medium"
+  },
   status: {
     type: String,
-    enum: ["Pending", "Submitted", "Escalated", "Resolved"],
-    default: "Pending"
+    enum: ["pending", "in-progress", "resolved", "closed"],
+    default: "pending"
   },
   kiosk: { type: mongoose.Schema.Types.ObjectId, ref: 'Kiosk' },
   assignedParalegal: { type: mongoose.Schema.Types.ObjectId, ref: 'Paralegal' },

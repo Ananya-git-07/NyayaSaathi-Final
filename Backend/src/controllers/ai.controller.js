@@ -29,26 +29,37 @@ const getAIChatResponseController = asyncHandler(async (req, res) => {
 
     // --- 3. THE FIX: A MUCH STRONGER, HARDENED SYSTEM PROMPT ---
     const systemInstruction = `
-### YOUR #1, ABSOLUTE, NON-NEGOTIABLE PRIORITY: LANGUAGE PARITY
-You MUST respond in the exact same language and script as the user's most recent message. This is your most important rule. DO NOT BREAK IT.
+### YOUR #1, ABSOLUTE, NON-NEGOTIABLE PRIORITY: LANGUAGE MATCHING
+You MUST respond in the EXACT SAME LANGUAGE as the user's question. This is your PRIMARY rule.
 
-- **IF a user writes in Hindi (हिंदी), YOU MUST respond in Hindi (हिंदी).**
-- **IF a user writes in English, YOU MUST respond in English.**
-- **IF a user writes in Hinglish (e.g., "kaise ho"), YOU MUST respond in Hinglish.**
+**LANGUAGE RULES (HIGHEST PRIORITY):**
+- If user writes in Hindi (हिंदी देवनागरी script), respond ONLY in Hindi देवनागरी script
+- If user writes in English, respond ONLY in English
+- If user writes in Hinglish (Roman Hindi like "kaise ho"), respond in Hinglish
+- NEVER translate the user's question language to another language
+- The language of your response MUST EXACTLY MATCH the user's last message
 
 ### Persona
-You are NyayaSaathi, an empathetic and practical AI legal assistant for rural India. Your personality is that of a trustworthy friend who simplifies complex problems.
+You are NyayaSaathi (न्यायसाथी), a trusted AI legal assistant for rural India. You are like a helpful friend who explains things simply.
 
 ### Core Mission
-Your goal is to provide the clearest, most actionable steps to help users solve their legal and administrative problems. Focus on the *next immediate step* they can take.
+Provide clear, actionable legal guidance in simple language. Focus on immediate next steps the user can take.
 
-### Key Directives
-- **Action-Oriented:** Always tell the user *what to do*. Use simple, numbered steps.
-- **Simplicity Above All:** No legal jargon. Explain everything as if you're talking to a friend who is new to the topic.
-- **Be Concise, But Complete:** Keep responses short and use lists. Never stop mid-sentence. Ensure your response is fully generated.
+### Response Guidelines
+1. **Match Language:** First check what language the user used, then respond in THAT language
+2. **Be Simple:** No legal jargon - explain like talking to a friend
+3. **Be Actionable:** Give numbered steps the user can follow
+4. **Be Complete:** Never stop mid-sentence
+5. **Be Concise:** Keep answers focused and brief
 
-### FINAL SELF-CORRECTION CHECK
-Before you generate a response, you must ask yourself one question: "Is the language of my response identical to the user's last message?" If the answer is no, START OVER and write your response in the correct language.
+### Example Language Matching:
+- User: "What are the steps to resolve a land dispute?" → Response in English
+- User: "जमीन के विवाद को हल करने के क्या कदम हैं?" → Response in Hindi only
+- User: "Land dispute kaise solve kare?" → Response in Hinglish
+
+### CRITICAL CHECK BEFORE RESPONDING:
+Ask yourself: "What language/script did the user use in their last message?" 
+Then respond in THAT EXACT language/script. NO EXCEPTIONS.
 `;
 
     // --- 4. Initialize AI Model ---
@@ -80,6 +91,12 @@ Before you generate a response, you must ask yourself one question: "Is the lang
         formattedHistory = [];
     }
     
+    // Detect if the query contains Hindi/Devanagari characters
+    const containsHindi = /[\u0900-\u097F]/.test(newQuery);
+    const languageHint = containsHindi 
+        ? "\n\n[CRITICAL INSTRUCTION: The user's question is written in Hindi Devanagari script. You MUST respond ONLY in Hindi Devanagari script (हिंदी). DO NOT use English or Roman script.]" 
+        : "\n\n[CRITICAL INSTRUCTION: The user's question is written in English. You MUST respond ONLY in English. DO NOT use Hindi, Devanagari script, or Hinglish. Use proper English only.]";
+    
     // --- 6. Start Chat and Generate Response ---
     try {
         const chat = model.startChat({
@@ -90,7 +107,7 @@ Before you generate a response, you must ask yourself one question: "Is the lang
             },
         });
 
-        const result = await chat.sendMessage(newQuery);
+        const result = await chat.sendMessage(newQuery + languageHint);
         const response = result.response;
         
         if (response.promptFeedback?.blockReason) {
@@ -124,4 +141,280 @@ Before you generate a response, you must ask yourself one question: "Is the lang
     }
 });
 
-export { getAIChatResponseController };
+/**
+ * @route POST /api/ai/summarize-document
+ * @description Summarizes a legal document using AI
+ * @access Protected (Requires a valid JWT)
+ */
+const summarizeDocumentController = asyncHandler(async (req, res) => {
+    const { documentText, documentUrl, documentType, publicId, resourceType, format } = req.body;
+    let { imageBase64, imageMimeType } = req.body;
+
+    let textToSummarize = documentText;
+    let hasImage = false;
+
+    // If publicId is provided, use Cloudinary Admin API to fetch the resource with authentication
+    if (!textToSummarize && publicId) {
+        try {
+            const { v2: cloudinary } = (await import('cloudinary'));
+            
+            // Configure cloudinary
+            cloudinary.config({
+                cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                api_key: process.env.CLOUDINARY_API_KEY,
+                api_secret: process.env.CLOUDINARY_API_SECRET
+            });
+            
+            console.log(`Fetching document from Cloudinary using publicId: ${publicId}`);
+            
+            // Get resource details
+            const resource = await cloudinary.api.resource(publicId, {
+                resource_type: resourceType || 'image',
+                type: 'upload'
+            });
+            
+            const authenticatedUrl = resource.secure_url || resource.url;
+            const isImage = (resource.format && ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'jfif'].includes(resource.format.toLowerCase())) || 
+                           resourceType === 'image';
+            
+            if (isImage) {
+                // Fetch the image and convert to base64
+                const axios = (await import('axios')).default;
+                const response = await axios.get(authenticatedUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: 30000
+                });
+                
+                const base64 = Buffer.from(response.data).toString('base64');
+                hasImage = true;
+                imageBase64 = base64;
+                imageMimeType = `image/${resource.format === 'jpg' || resource.format === 'jfif' ? 'jpeg' : resource.format}`;
+                
+                console.log(`Successfully fetched image document (${imageMimeType}) from Cloudinary`);
+            } else {
+                throw new ApiError(400, "Only image documents can be analyzed. PDF support coming soon.");
+            }
+            
+        } catch (error) {
+            console.error("Cloudinary API error:", error);
+            throw new ApiError(400, `Failed to fetch document from cloud storage: ${error.message}`);
+        }
+    }
+    // If documentUrl is provided, fetch the document from the URL (e.g., Cloudinary)
+    if (!textToSummarize && documentUrl) {
+        try {
+            // First check the URL extension to determine file type (more reliable than content-type header)
+            const urlLower = documentUrl.toLowerCase();
+            const isImageUrl = urlLower.match(/\.(jpg|jpeg|png|gif|webp|bmp|jfif)$/i);
+            const isPdfUrl = urlLower.match(/\.pdf$/i);
+            
+            const fetchResponse = await fetch(documentUrl);
+            
+            // Even if fetch fails (like with Cloudinary 401), we can still determine type from URL
+            const contentType = fetchResponse.headers.get('content-type') || '';
+            
+            // Check if it's an image file (prioritize URL extension over content-type)
+            if (isImageUrl || (contentType.startsWith('image/') && !isPdfUrl)) {
+                // For images, we need to fetch them successfully
+                if (!fetchResponse.ok) {
+                    throw new ApiError(400, `Failed to fetch image from URL: ${fetchResponse.statusText}. The document storage may have access restrictions.`);
+                }
+                
+                const blob = await fetchResponse.blob();
+                // Convert image to base64 for Gemini vision
+                const arrayBuffer = await blob.arrayBuffer();
+                const base64 = Buffer.from(arrayBuffer).toString('base64');
+                
+                // Set image data for vision analysis
+                hasImage = true;
+                imageBase64 = base64;
+                // Determine mime type from URL extension if content-type is wrong
+                if (isImageUrl) {
+                    const ext = isImageUrl[1].toLowerCase();
+                    imageMimeType = `image/${ext === 'jpg' || ext === 'jfif' ? 'jpeg' : ext}`;
+                } else {
+                    imageMimeType = contentType || 'image/jpeg';
+                }
+                
+                console.log(`Document is an image (${imageMimeType}), using vision analysis`);
+            } else if (isPdfUrl || contentType.includes('pdf')) {
+                // For PDFs, try to fetch and convert to text
+                // This requires additional libraries like pdf-parse
+                throw new ApiError(400, "PDF document analysis from URL requires the document to be converted to images or text first. Please upload individual pages as images for best results.");
+            } else {
+                // Assume it's text-based
+                if (!fetchResponse.ok) {
+                    throw new ApiError(400, `Failed to fetch document from URL: ${fetchResponse.statusText}`);
+                }
+                const blob = await fetchResponse.blob();
+                textToSummarize = await blob.text();
+            }
+        } catch (error) {
+            console.error("Error fetching document from URL:", error);
+            // If it's already an ApiError, re-throw it
+            if (error.statusCode) {
+                throw error;
+            }
+            throw new ApiError(400, `Error fetching document from URL: ${error.message}`);
+        }
+    }
+
+    // Check if we have image data
+    if (imageBase64 && imageMimeType) {
+        hasImage = true;
+    }
+
+    // Validate that we have either text or image
+    if (!hasImage && (!textToSummarize || typeof textToSummarize !== 'string' || textToSummarize.trim() === '')) {
+        throw new ApiError(400, "Document text, image, or URL is required.");
+    }
+
+    // Limit text length to avoid token limits
+    if (textToSummarize && textToSummarize.length > 10000) {
+        textToSummarize = textToSummarize.substring(0, 10000);
+    }
+
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    if (!GEMINI_API_KEY) {
+        console.error("CRITICAL: GEMINI_API_KEY is not configured on the server.");
+        throw new ApiError(500, "The AI service is not configured correctly on the server.");
+    }
+
+    const systemInstruction = `
+You are a legal document analyzer for NyayaSaathi, serving rural India.
+
+Your task is to analyze the SPECIFIC document content provided and extract ACTUAL information from it.
+
+**CRITICAL RULES:**
+1. DO NOT give generic explanations about what type of documents are
+2. ANALYZE THE ACTUAL CONTENT - extract names, dates, amounts, places, and specific details
+3. If it's a certificate, tell me WHOSE certificate it is, WHAT it certifies, WHO issued it, and WHEN
+4. If it's a legal notice, tell me WHO sent it, WHO received it, WHAT is the issue, and WHAT action is demanded
+5. Extract ALL specific information: names of people, organizations, dates, amounts, locations
+6. Use simple language but be SPECIFIC about the actual document content
+7. If the document is too vague or you cannot extract specific details, say so clearly
+
+**Output Format (JSON):**
+{
+  "documentType": "specific type like Birth Certificate, Sale Deed, Court Summons, etc.",
+  "summary": "2-3 sentences about THIS SPECIFIC document - WHO, WHAT, WHEN, WHERE",
+  "keyPoints": [
+    "Specific detail 1 from the document (names, dates, amounts)",
+    "Specific detail 2 from the document",
+    "Specific detail 3 from the document"
+  ],
+  "recommendations": [
+    "Specific action based on THIS document's content",
+    "action 2",
+    "action 3"
+  ],
+  "urgency": "low/medium/high based on document content",
+  "nextSteps": "Specific next step based on THIS document"
+}
+`;
+
+    try {
+        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+        
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",  // Using flash model for higher free tier limits
+            systemInstruction: systemInstruction,
+        });
+
+        let prompt;
+        let contentParts = [];
+
+        if (hasImage) {
+            // For image analysis
+            prompt = `Analyze this document image and extract SPECIFIC information from it:
+
+DO NOT give generic explanations. Extract ACTUAL details visible in the image:
+- If there are names, list them
+- If there are dates, mention them
+- If there are amounts/numbers, include them
+- If there are locations, state them
+- Read ALL text visible in the image
+- Tell me what THIS specific document is about, not what this type of document generally means
+
+Provide your analysis in the JSON format specified in the system instructions.`;
+
+            contentParts = [
+                { text: prompt },
+                {
+                    inlineData: {
+                        mimeType: imageMimeType,
+                        data: imageBase64
+                    }
+                }
+            ];
+            
+            // Add text context if provided
+            if (textToSummarize && textToSummarize.trim()) {
+                contentParts.push({ text: `\n\nAdditional context: ${textToSummarize}` });
+            }
+        } else {
+            // For text-only analysis
+            prompt = `Read this document carefully and extract SPECIFIC information from it:
+
+${textToSummarize}
+
+DO NOT give generic explanations. Extract ACTUAL details from the text above:
+- If there are names, list them
+- If there are dates, mention them
+- If there are amounts/numbers, include them
+- If there are locations, state them
+- Tell me what THIS specific document is about, not what this type of document generally means
+
+Provide your analysis in the JSON format specified in the system instructions.`;
+            
+            contentParts = [{ text: prompt }];
+        }
+
+        const result = await model.generateContent(contentParts);
+        const response = result.response;
+        
+        if (response.promptFeedback?.blockReason) {
+            console.error("Gemini Response Blocked:", response.promptFeedback);
+            throw new ApiError(500, "The response was blocked by the AI's safety filters.");
+        }
+
+        let aiResponse = response.text();
+        
+        // Extract JSON from markdown code blocks if present
+        const jsonMatch = aiResponse.match(/```json\n([\s\S]*?)\n```/) || aiResponse.match(/```\n([\s\S]*?)\n```/);
+        if (jsonMatch) {
+            aiResponse = jsonMatch[1];
+        }
+
+        // Parse the JSON response
+        let parsedResponse;
+        try {
+            parsedResponse = JSON.parse(aiResponse);
+        } catch (parseError) {
+            console.error("Failed to parse AI response as JSON:", aiResponse);
+            // Fallback to text response
+            parsedResponse = {
+                documentType: documentType || "Legal Document",
+                summary: aiResponse,
+                keyPoints: ["Analysis completed - please review the summary above"],
+                recommendations: ["Consult with a legal professional for detailed advice"],
+                urgency: "medium",
+                nextSteps: "Review the document carefully and seek legal consultation if needed"
+            };
+        }
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                parsedResponse,
+                "Document summarized successfully."
+            )
+        );
+
+    } catch (error) {
+        console.error("Error summarizing document:", error);
+        throw new ApiError(500, `An error occurred while summarizing the document: ${error.message}`);
+    }
+});
+
+export { getAIChatResponseController, summarizeDocumentController };

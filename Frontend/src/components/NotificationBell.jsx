@@ -49,21 +49,27 @@ const NotificationBell = () => {
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button onClick={() => setIsOpen(!isOpen)} className="relative p-2 rounded-full text-slate-500 hover:bg-slate-200 transition-colors">
+            <button 
+                onClick={() => setIsOpen(!isOpen)} 
+                className="relative p-2 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-500 text-white text-xs font-bold ring-2 ring-white">
-                        {unreadCount}
+                    <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-500 text-white text-xs font-bold ring-2 ring-white dark:ring-slate-900 flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-slate-200 z-50">
-                    <div className="p-3 flex justify-between items-center border-b">
-                        <h3 className="font-semibold text-slate-800">Notifications</h3>
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50">
+                    <div className="p-3 flex justify-between items-center border-b border-slate-200 dark:border-slate-700">
+                        <h3 className="font-semibold text-slate-800 dark:text-white">Notifications</h3>
                         {unreadCount > 0 && (
-                            <button onClick={handleMarkAllRead} className="text-xs text-cyan-600 hover:underline flex items-center gap-1">
+                            <button 
+                                onClick={handleMarkAllRead} 
+                                className="text-xs text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
+                            >
                                 <CheckCheck size={14} /> Mark all as read
                             </button>
                         )}
@@ -71,13 +77,21 @@ const NotificationBell = () => {
                     <div className="max-h-96 overflow-y-auto">
                         {notifications.length > 0 ? (
                             notifications.map(n => (
-                                <div key={n._id} onClick={() => handleNotificationClick(n)} className={`p-3 border-b border-slate-100 cursor-pointer hover:bg-slate-50 ${!n.isRead ? 'bg-cyan-50' : ''}`}>
-                                    <p className="text-sm text-slate-700">{n.message}</p>
-                                    <p className="text-xs text-slate-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                                <div 
+                                    key={n._id} 
+                                    onClick={() => handleNotificationClick(n)} 
+                                    className={`p-3 border-b border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
+                                        !n.isRead ? 'bg-cyan-50 dark:bg-cyan-900/20' : ''
+                                    }`}
+                                >
+                                    <p className="text-sm text-slate-700 dark:text-slate-300">{n.message}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                        {new Date(n.createdAt).toLocaleString()}
+                                    </p>
                                 </div>
                             ))
                         ) : (
-                            <p className="p-4 text-center text-sm text-slate-500">No new notifications.</p>
+                            <p className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">No new notifications.</p>
                         )}
                     </div>
                 </div>

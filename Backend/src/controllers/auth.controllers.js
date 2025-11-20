@@ -38,7 +38,7 @@ const cookieOptions = {
 
 // 1. Register User
 export const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, password, aadhaarNumber, role } = req.body;
+    const { fullName, email, password, aadhaarNumber, role, phoneNumber, department, designation, roleLevel, kioskId, areasOfExpertise } = req.body;
 
     if ([fullName, email, password, aadhaarNumber, role].some((field) => !field || field.trim() === "")) {
         throw new ApiError(400, "All required fields must be filled.");
@@ -49,7 +49,55 @@ export const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with this email or Aadhaar number already exists.");
     }
 
-    const user = await User.create({ fullName, email, password, aadhaarNumber, role });
+    // Create the base user
+    const user = await User.create({ fullName, email, password, aadhaarNumber, role, phoneNumber });
+
+    // Create role-specific records
+    if (role === 'paralegal') {
+        if (!phoneNumber) {
+            throw new ApiError(400, "Phone number is required for paralegals.");
+        }
+        if (!areasOfExpertise || areasOfExpertise.length === 0) {
+            throw new ApiError(400, "At least one area of expertise is required for paralegals.");
+        }
+        
+        const Paralegal = (await import('../models/Paralegal.js')).default;
+        await Paralegal.create({
+            user: user._id,
+            phoneNumber,
+            areasOfExpertise,
+            active: true,
+            rating: 0,
+            isDeleted: false
+        });
+    } else if (role === 'employee') {
+        if (!department || !designation || !roleLevel || !kioskId) {
+            throw new ApiError(400, "Department, designation, role level, and kiosk are required for employees.");
+        }
+        
+        const Employee = (await import('../models/Employee.js')).default;
+        await Employee.create({
+            user: user._id,
+            kioskId: kioskId,
+            department,
+            designation,
+            roleLevel,
+            isDeleted: false
+        });
+    } else if (role === 'admin') {
+        if (!phoneNumber || !department || !designation) {
+            throw new ApiError(400, "Phone number, department, and designation are required for admins.");
+        }
+        
+        const Admin = (await import('../models/Admin.js')).default;
+        await Admin.create({
+            user: user._id,
+            phoneNumber,
+            department,
+            designation,
+            isDeleted: false
+        });
+    }
 
     const createdUser = await User.findById(user._id).select("-password -refreshToken");
     if (!createdUser) {

@@ -10,13 +10,16 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET 
 });
 
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (localFilePath, options = {}) => {
     try {
         if (!localFilePath) return null;
 
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto",
-            folder: "nyayasaathi_uploads"
+            folder: "nyayasaathi_uploads",
+            type: "upload", // Use 'upload' type for public access
+            access_mode: "public", // Make files publicly accessible
+            ...options
         });
         
         fs.unlinkSync(localFilePath);
@@ -31,6 +34,22 @@ const uploadOnCloudinary = async (localFilePath) => {
         return null;
     }
 }
+
+// Generate a signed URL for accessing resources (useful for authenticated delivery)
+const generateSignedUrl = (publicId, options = {}) => {
+    try {
+        const signedUrl = cloudinary.url(publicId, {
+            sign_url: true,
+            secure: true,
+            type: 'upload',
+            ...options
+        });
+        return signedUrl;
+    } catch (error) {
+        console.error("Failed to generate signed URL:", error);
+        return null;
+    }
+};
 
 // --- THIS IS THE FIX: Add function to delete assets ---
 const deleteFromCloudinary = async (publicId) => {
@@ -47,4 +66,4 @@ const deleteFromCloudinary = async (publicId) => {
 // --- END OF FIX ---
 
 
-export { uploadOnCloudinary, deleteFromCloudinary };
+export { uploadOnCloudinary, deleteFromCloudinary, generateSignedUrl };

@@ -151,8 +151,8 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
           >
             <div className="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/50 flex items-center justify-center">
-                  <MessageSquare size={20} className="text-cyan-600 dark:text-cyan-400" />
+                <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
+                  <MessageSquare size={20} className="text-purple-600 dark:text-purple-400" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                   {t("assistant.title")}
@@ -176,7 +176,7 @@ const SmartAssistantModal = ({ isOpen, onClose }) => {
                 >
                   {msg.role === "assistant" && (
                     <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-                      <Sparkles size={16} className="text-cyan-600 dark:text-cyan-400" />
+                      <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
                     </div>
                   )}
                   <div

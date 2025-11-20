@@ -2,7 +2,6 @@
 // and provides a unified interface for the smart assistant
 
 const INDIAN_KANOON_API_BASE = "https://api.indiankanoon.org/search/"
-const LEGAL_API_KEY = process.env.REACT_APP_GROQ_API_KEY||"demo_key"
 
 // Comprehensive knowledge base of Indian laws
 const indianLegalKnowledge = {
@@ -549,39 +548,42 @@ export const getLegalInformation = async (query) => {
   }
 }
 
-// Function to summarize legal documents
-export const summarizeLegalDocument = async (documentText) => {
+// Function to summarize legal documents using AI
+export const summarizeLegalDocument = async (documentText, documentType = null, documentUrl = null, publicId = null, resourceType = null, format = null) => {
   try {
-    // In a real implementation, this would call an AI service API
-    // For now, we'll simulate a response
+    const response = await fetch('/api/ai/summarize-document', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({ documentText, documentType, documentUrl, publicId, resourceType, format }),
+    });
 
-    // Simulate processing time
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    // If response is not OK, try to read text (could be HTML from dev server) and throw a helpful error
+    if (!response.ok) {
+      let errorText = '';
+      try {
+        errorText = await response.text();
+      } catch (e) {
+        /* ignore */
+      }
+      const message = errorText ? errorText : response.statusText || 'Failed to summarize document';
+      throw new Error(message);
+    }
+
+    const data = await response.json();
 
     return {
       success: true,
-      summary:
-        "This document appears to be a legal notice regarding property dispute. Key points include: 1) Contested property in Mathura district, 2) Claim based on ancestral ownership, 3) Requires response within 30 days, 4) Mentions previous court order from 2018.",
-      documentType: "Legal Notice",
-      keyPoints: [
-        "Property dispute in Mathura district",
-        "Ancestral ownership claim",
-        "30-day response timeline",
-        "References previous court order",
-      ],
-      recommendations: [
-        "Consult a property lawyer immediately",
-        "Gather ownership documents",
-        "Prepare formal written response",
-        "Consider mediation options",
-      ],
-    }
+      ...data.data,
+    };
   } catch (error) {
-    console.error("Error summarizing document:", error)
+    console.error("Error summarizing document:", error);
     return {
       success: false,
-      error: "Failed to summarize document",
-    }
+      error: error.message || "Failed to summarize document",
+    };
   }
 }
 

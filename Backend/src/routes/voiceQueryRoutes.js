@@ -13,7 +13,13 @@ import {
 // Import validation tools
 import { body, query, param, validationResult } from 'express-validator';
 
+// --- SECURITY: Import Auth Middleware ---
+import verifyJWT from '../middleware/authMiddleware.js'; 
+
 const router = Router();
+
+// --- SECURITY: Apply Middleware to all routes ---
+router.use(verifyJWT);
 
 // Validation middleware
 const validate = (req, res, next) => {
@@ -32,7 +38,8 @@ const validate = (req, res, next) => {
 // Get voice query statistics for the user
 router.get('/stats/summary', async (req, res, next) => {
     try {
-        const userId = new mongoose.Types.ObjectId(req.user.userId);
+        // FIX: Use req.user._id instead of req.user.userId
+        const userId = new mongoose.Types.ObjectId(req.user._id);
         
         const [activeQueries, deletedQueries] = await Promise.all([
             // Model middleware automatically handles isDeleted: false
@@ -62,7 +69,8 @@ router.get('/deleted/list', [
     try {
         const { page = 1, limit = 10 } = req.query;
         const skip = (parseInt(page) - 1) * parseInt(limit);
-        const queryConditions = { userId: req.user.userId, isDeleted: true };
+        // FIX: Use req.user._id
+        const queryConditions = { userId: req.user._id, isDeleted: true };
 
         const [deletedQueries, totalCount] = await Promise.all([
             // Use custom static method to find deleted items
@@ -96,7 +104,8 @@ router.get('/', [
 ], async (req, res, next) => {
     try {
         const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
-        const query = { userId: req.user.userId }; // Model middleware handles isDeleted: false
+        // FIX: Use req.user._id
+        const query = { userId: req.user._id }; 
         const skip = (parseInt(page) - 1) * parseInt(limit);
         const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
@@ -119,11 +128,10 @@ router.get('/:id', [
     validate
 ], async (req, res, next) => {
     try {
-        // Model middleware ensures we only find active queries
-        // Also check ownership for security
+        // FIX: Use req.user._id for ownership check
         const voiceQuery = await VoiceQuery.findOne({ 
             _id: req.params.id, 
-            userId: req.user.userId 
+            userId: req.user._id 
         });
 
         if (!voiceQuery) {
@@ -148,7 +156,8 @@ router.post('/', [
             issueId: req.body.issueId,
             transcribedText: req.body.transcribedText,
             language: req.body.language,
-            userId: req.user.userId // Ensure ownership is set from logged-in user
+            // FIX: Use req.user._id
+            userId: req.user._id 
         });
 
         const savedQuery = await newVoiceQuery.save();
@@ -164,15 +173,14 @@ router.delete('/:id', [
     validate
 ], async (req, res, next) => {
     try {
-        // Helper handles all logic: ID validation, ownership check, error handling
+        // FIX: Use req.user._id in options
         const deletedQuery = await softDeleteById(VoiceQuery, req.params.id, {
             checkOwnership: true,
-            userId: req.user.userId
+            userId: req.user._id
         });
 
         res.status(200).json(createResponse(true, deletedQuery, 'Voice query deleted successfully.'));
     } catch (err) {
-        // Errors from helper have status codes and are passed to global handler
         next(err);
     }
 });
@@ -183,10 +191,10 @@ router.patch('/:id/restore', [
     validate
 ], async (req, res, next) => {
     try {
-        // Restore helper uses the same secure options
+        // FIX: Use req.user._id in options
         const restoredQuery = await restoreById(VoiceQuery, req.params.id, {
             checkOwnership: true,
-            userId: req.user.userId
+            userId: req.user._id
         });
 
         res.status(200).json(createResponse(true, restoredQuery, 'Voice query restored successfully.'));

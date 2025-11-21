@@ -1,11 +1,21 @@
+// FILE: Backend/src/routes/adminRoutes.js
+
 import { Router } from 'express';
 import Admin from '../models/Admin.js';
-import User from '../models/User.js'; // Import other models for stats
+import User from '../models/User.js';
 import LegalIssue from '../models/LegalIssue.js';
 import Kiosk from '../models/Kiosk.js';
 import { softDeleteById } from '../utils/helpers.js';
+import verifyJWT from '../middleware/authMiddleware.js'; // Auth
+import { verifyRole } from '../middleware/roleMiddleware.js'; // RBAC
 
 const router = Router();
+
+// --- SECURITY: Lock down all Admin routes ---
+router.use(verifyJWT);
+router.use(verifyRole('admin')); 
+// Now ONLY Admins can pass this point
+
 router.get('/stats', async (req, res, next) => {
     try {
         // 1. Get simple counts
@@ -46,8 +56,7 @@ router.get('/stats', async (req, res, next) => {
     }
 });
 
-
-// Get all active admins (protected by default middleware)
+// Get all active admins
 router.get('/', async (req, res, next) => {
   try {
     const admins = await Admin.find({ isDeleted: false }).populate('user', 'fullName email role');

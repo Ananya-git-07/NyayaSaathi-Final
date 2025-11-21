@@ -1,11 +1,14 @@
-
-
 import { Router } from "express"
 import LegalIssue from "../models/LegalIssue.js"
 import Document from "../models/Document.js"
 import User from "../models/User.js"
+import verifyJWT from "../middleware/authMiddleware.js"; // <--- IMPORT THIS
 
 const router = Router()
+
+// --- CRITICAL SECURITY FIX: Apply Auth Middleware ---
+// This ensures req.user is populated for all routes below
+router.use(verifyJWT);
 
 // Get all Legal Issues for the logged-in Citizen
 router.get('/issues', async (req, res, next) => {

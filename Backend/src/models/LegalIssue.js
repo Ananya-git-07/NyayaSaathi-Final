@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-// --- NEW: Schema for history events ---
+// Schema for history events
 const historyEventSchema = new mongoose.Schema({
   event: {
     type: String,
@@ -14,8 +14,8 @@ const historyEventSchema = new mongoose.Schema({
     ]
   },
   timestamp: { type: Date, default: Date.now },
-  details: { type: String }, // e.g., "Status changed to Resolved" or Document type
-  actor: { type: String, default: 'System' } // Who performed the action (e.g., 'User', 'Admin')
+  details: { type: String }, 
+  actor: { type: String, default: 'System' } 
 });
 
 const legalIssueSchema = new mongoose.Schema({
@@ -25,7 +25,16 @@ const legalIssueSchema = new mongoose.Schema({
     enum: ["Aadhaar Issue", "Pension Issue", "Land Dispute", "Court Summon", "Certificate Missing", "Fraud Case", "Other"],
     required: true
   },
-  description: String,
+  description: String, // General summary
+  
+  // --- NEW: Flexible field for specific form data ---
+  formDetails: {
+    type: Map,
+    of: String,
+    default: {} 
+    // Example: { "surveyNumber": "123", "village": "Rampur", "ppoNumber": "XYZ" }
+  },
+
   status: {
     type: String,
     enum: ["Pending", "Submitted", "Escalated", "Resolved"],
@@ -35,7 +44,6 @@ const legalIssueSchema = new mongoose.Schema({
   assignedParalegal: { type: mongoose.Schema.Types.ObjectId, ref: 'Paralegal' },
   documents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Document' }],
   
-  // --- NEW: Add the history array to the main schema ---
   history: [historyEventSchema],
 
   isDeleted: { type: Boolean, default: false }

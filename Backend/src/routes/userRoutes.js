@@ -1,4 +1,4 @@
-// PASTE THIS ENTIRE FILE INTO Backend/src/routes/userRoutes.js
+// FILE: Backend/src/routes/userRoutes.js
 
 import { Router } from 'express';
 import User from '../models/User.js';
@@ -7,11 +7,16 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { upload } from '../middleware/multer.middleware.js';
 import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
+import verifyJWT from '../middleware/authMiddleware.js'; // Import Auth
+import { verifyRole } from '../middleware/roleMiddleware.js'; // Import RBAC
 
 const router = Router();
 
-// Get all non-deleted users (admin functionality)
-router.get('/', async (req, res, next) => {
+// --- SECURITY: Apply Auth Middleware ---
+router.use(verifyJWT);
+
+// Get all non-deleted users (Restricted to Admin)
+router.get('/', verifyRole('admin'), async (req, res, next) => {
   try {
     const users = await User.find({ isDeleted: false }).select('-password');
     res.json(users);
@@ -20,7 +25,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// Update user profile details
+// Update user profile details (Any logged in user can update their OWN profile)
 router.put('/update-profile', async (req, res, next) => {
   try {
     const { fullName, phoneNumber } = req.body;
@@ -117,7 +122,6 @@ router.put('/update-avatar', upload.single('avatar'), async (req, res, next) => 
     }
 });
 
-// --- THIS IS THE FIX: Add route for avatar deletion ---
 router.delete('/remove-avatar', async (req, res, next) => {
     try {
         const user = await User.findById(req.user._id);
@@ -125,12 +129,10 @@ router.delete('/remove-avatar', async (req, res, next) => {
             throw new ApiError(404, "User not found.");
         }
 
-        // Delete from Cloudinary if an ID exists
         if (user.profilePictureCloudinaryId) {
             await deleteFromCloudinary(user.profilePictureCloudinaryId);
         }
 
-        // Update user document to clear avatar fields
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             {
@@ -147,10 +149,9 @@ router.delete('/remove-avatar', async (req, res, next) => {
         next(error);
     }
 });
-// --- END OF FIX ---
 
-// Soft delete a user by ID (admin functionality)
-router.delete('/:id', async (req, res, next) => {
+// --- CRITICAL FIX: Restrict Deletion to Admins Only ---
+router.delete('/:id', verifyRole('admin'), async (req, res, next) => {
   try {
     const user = await softDeleteById(User, req.params.id);
     res.json({ message: 'User soft-deleted successfully', user });
@@ -158,5 +159,4 @@ router.delete('/:id', async (req, res, next) => {
     next(err);
   }
 });
-
 export default router;

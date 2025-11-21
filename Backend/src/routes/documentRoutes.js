@@ -1,3 +1,5 @@
+// REPLACE THE CONTENT OF Backend/src/routes/documentRoutes.js WITH THIS:
+
 import { Router } from "express";
 import Document from "../models/Document.js";
 import LegalIssue from "../models/LegalIssue.js";
@@ -5,10 +7,20 @@ import { upload, cleanupTempFile } from "../middleware/multer.middleware.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import verifyJWT from "../middleware/authMiddleware.js"; // Import Auth
+import { generateDocument } from "../controllers/documentGenerator.controller.js"; // Import Generator
 
 const router = Router();
 
-// === CREATE: Upload a new document ===
+// --- SECURITY: Apply Auth Middleware ---
+router.use(verifyJWT);
+
+// === NEW ROUTE: Generate PDF ===
+// POST /api/documents/generate
+// Body: { type: "Affidavit", data: { fullName: "Ram", ... } }
+router.post("/generate", generateDocument);
+
+// === EXISTING CREATE: Upload a new document ===
 router.post("/upload", upload.single("documentFile"), async (req, res, next) => {
   let tempFilePath = req.file ? req.file.path : null;
   try {
@@ -49,11 +61,11 @@ router.post("/upload", upload.single("documentFile"), async (req, res, next) => 
   }
 });
 
-// === READ: Get all documents for the logged-in user ===
+// === EXISTING READ: Get all documents ===
 router.get("/", async (req, res, next) => {
   try {
     const documents = await Document.find({ userId: req.user._id, isDeleted: false })
-      .populate("issueId", "issueType status")
+      .populate("issueId", "issueType description status")
       .sort({ createdAt: -1 });
     return res.status(200).json(new ApiResponse(200, documents, "Documents retrieved successfully."));
   } catch (error) {
@@ -61,7 +73,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// === READ: Get a single document by its ID ===
+// === EXISTING READ: Get single document ===
 router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -75,7 +87,7 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-// === DELETE: Soft delete a document ===
+// === EXISTING DELETE: Soft delete ===
 router.delete("/:id", async (req, res, next) => {
     try {
         const { id } = req.params;

@@ -1,97 +1,79 @@
+// PASTE THIS ENTIRE FILE INTO src/services/aiService.jsx
+
 import apiClient from '../api/axiosConfig';
 
 /**
  * The single source for all AI interactions in the NyayaSaathi application.
- * AI responses are dynamic based on user role and always NyayaSaathi-focused.
  */
 
-const getGenerativeAIChatResponse = async (conversationHistory, newQuery, userRole = "citizen") => {
+const getGenerativeAIChatResponse = async (conversationHistory, newQuery) => {
   try {
-    // 🧭 The system prompt is now handled exclusively by the backend.
-    // The frontend only needs to send the conversation context and the new query.
-
-    // Send request to backend
     const { data } = await apiClient.post('/ai/chat', {
       conversationHistory,
       newQuery,
-      userRole, // optional, for backend logic if supported
+      mode: 'chat' // Default mode
     });
 
     if (data.success && data.data.response) {
       return data.data.response;
     } else {
-      throw new Error(data.message || "Received an invalid response from the AI.");
+      throw new Error("Invalid response from AI.");
     }
-
   } catch (error) {
-    console.error("AI Service Error:", error);
-    const errorMessage =
-      error.response?.data?.message ||
-      "Sorry, I couldn't connect to the AI assistant right now. Please check the server connection.";
-    throw new Error(errorMessage);
+    console.error("AI Chat Error:", error);
+    throw error;
   }
 };
 
-// ----------------------------------------------
-// Text extraction helper (unchanged)
-// ----------------------------------------------
-const parseFormDataFromText = (text) => {
+/**
+ * Sends natural language to the backend to extract structured intent and data.
+ * @param {string} text - The user's spoken or typed input.
+ * @returns {object} - Structured JSON { intent, data, missingInfo }
+ */
+const parseUserIntent = async (text) => {
+  try {
+    const { data } = await apiClient.post('/ai/chat', {
+      newQuery: text,
+      mode: 'parse'
+    });
+
+    if (data.success && data.data.parsed) {
+      return data.data.parsed;
+    } else {
+      // Fallback if backend didn't return parsed object
+      return JSON.parse(data.data.response);
+    }
+  } catch (error) {
+    console.error("AI Parse Error:", error);
+    // Fallback to basic regex if API fails
+    return parseFormDataRegex(text);
+  }
+};
+
+// --- Legacy Fallback (Regex) ---
+const parseFormDataRegex = (text) => {
   const lowerText = text.toLowerCase();
+  let intent = 'general_query';
   const data = {};
 
-  const keywords = {
-    issueType: ['type is', 'category is', 'issue is', 'about'],
-    description: ['description is', 'details are', 'problem is'],
-    documentType: ['document type is', 'document is', 'file is'],
-  };
-
-  const extractValue = (targetKeywords) => {
-    for (const keyword of targetKeywords) {
-      if (lowerText.includes(keyword)) {
-        return lowerText.split(keyword)[1].trim().split(/ and | with /)[0];
-      }
-    }
-    return null;
-  };
-
-  const issueTypesEnum = [
-    "Aadhaar Issue",
-    "Pension Issue",
-    "Land Dispute",
-    "Court Summon",
-    "Certificate Missing",
-    "Fraud Case",
-    "Other",
-  ];
-
-  const extractedIssueType = extractValue(keywords.issueType);
-  if (extractedIssueType) {
-    const matchedType = issueTypesEnum.find(
-      (t) => t.toLowerCase() === extractedIssueType.toLowerCase().trim()
-    );
-    data.issueType = matchedType || "Other";
+  if (lowerText.includes('issue') || lowerText.includes('complaint') || lowerText.includes('problem')) {
+    intent = 'create_issue';
+    if (lowerText.includes('aadhaar')) data.issueType = "Aadhaar Issue";
+    else if (lowerText.includes('land')) data.issueType = "Land Dispute";
+    else if (lowerText.includes('pension')) data.issueType = "Pension Issue";
+    else data.issueType = "Other";
+    data.description = text;
+  } else if (lowerText.includes('document') || lowerText.includes('upload')) {
+    intent = 'create_document';
+    if (lowerText.includes('aadhaar')) data.documentType = "Aadhaar Card";
+    else data.documentType = "Other";
   }
 
-  const extractedDocType = extractValue(keywords.documentType);
-  if (extractedDocType) {
-    data.documentType =
-      extractedDocType.charAt(0).toUpperCase() + extractedDocType.slice(1);
-  }
-
-  const extractedDescription = extractValue(keywords.description);
-  if (extractedDescription) {
-    data.description =
-      extractedDescription.charAt(0).toUpperCase() + extractedDescription.slice(1);
-  }
-
-  if (!extractedDescription && !extractedIssueType && !extractedDocType) {
-    data.description = text.charAt(0).toUpperCase() + text.slice(1);
-  }
-
-  return data;
+  return { intent, data, missingInfo: [] };
 };
 
 export const aiService = {
   getChatResponse: getGenerativeAIChatResponse,
-  parseFormDataFromText,
+  parseUserIntent,
+  parseFormDataFromText: parseFormDataRegex // Keep for backward compatibility if needed
 };

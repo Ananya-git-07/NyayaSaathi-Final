@@ -70,10 +70,22 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess, issues = [] }) => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) return toast.error("File size must be under 10MB.");
-      const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
-      if (!allowedTypes.includes(file.type)) return toast.error("Only PDF, JPG, & PNG are allowed.");
+      
+      // Only allow image files (PNG and JPEG) for AI analysis support
+      const allowedMimeTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png"
+      ];
+      
+      // Check if the file's MIME type is allowed
+      if (!allowedMimeTypes.includes(file.type)) {
+        return toast.error(`Only PNG and JPEG images are supported. PDF analysis is not available yet.`);
+      }
+      
       setDocumentFile(file);
       setFileName(file.name);
+      toast.success(`File selected: ${file.name} (${file.type})`);
     }
   };
 
@@ -163,14 +175,18 @@ const AddDocumentModal = ({ isOpen, onClose, onSuccess, issues = [] }) => {
                   <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-lg hover:border-purple-500 dark:hover:border-purple-400 transition-colors">
                     <div className="space-y-1 text-center">
                       <UploadCloud className="mx-auto h-12 w-12 text-slate-400" />
-                      <div className="flex text-sm text-slate-600 dark:text-slate-400">
+                      <div className="flex justify-center text-sm text-slate-600 dark:text-slate-400">
                         <label htmlFor="file-upload" className="relative cursor-pointer bg-white dark:bg-slate-800 rounded-md font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-500 focus-within:outline-none">
                           <span>{t("addDocModal.uploadFile")}</span>
-                          <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.jpg,.jpeg,.png" />
+                          <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".jpg,.jpeg,.png" />
                         </label>
                         <p className="pl-1">{t("addDocModal.dragDrop")}</p>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-500">{t("addDocModal.fileTypes")}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-500">PNG or JPEG only (Max 10MB)</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center justify-center gap-1">
+                        <span>⚠️</span>
+                        <span>Only image files (PNG/JPEG) are supported for AI analysis</span>
+                      </p>
                       {fileName && <p className="text-sm text-green-600 dark:text-green-400 mt-2 font-medium">{t("addDocModal.selectedFile", { fileName: fileName })}</p>}
                     </div>
                   </div>

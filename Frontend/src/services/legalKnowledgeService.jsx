@@ -551,6 +551,8 @@ export const getLegalInformation = async (query) => {
 // Function to summarize legal documents using AI
 export const summarizeLegalDocument = async (documentText, documentType = null, documentUrl = null, publicId = null, resourceType = null, format = null) => {
   try {
+    console.log('Sending summarization request with:', { documentType, documentUrl, publicId, resourceType, format });
+    
     const response = await fetch('/api/ai/summarize-document', {
       method: 'POST',
       headers: {
@@ -560,16 +562,25 @@ export const summarizeLegalDocument = async (documentText, documentType = null, 
       body: JSON.stringify({ documentText, documentType, documentUrl, publicId, resourceType, format }),
     });
 
-    // If response is not OK, try to read text (could be HTML from dev server) and throw a helpful error
+    // If response is not OK, parse the JSON error response properly
     if (!response.ok) {
-      let errorText = '';
+      let errorMessage = 'Failed to summarize document';
       try {
-        errorText = await response.text();
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+        console.error('API error response:', errorData);
       } catch (e) {
-        /* ignore */
+        // If can't parse as JSON, try text
+        try {
+          const errorText = await response.text();
+          if (errorText) {
+            errorMessage = errorText;
+          }
+        } catch (e2) {
+          // Use default message
+        }
       }
-      const message = errorText ? errorText : response.statusText || 'Failed to summarize document';
-      throw new Error(message);
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
@@ -580,10 +591,7 @@ export const summarizeLegalDocument = async (documentText, documentType = null, 
     };
   } catch (error) {
     console.error("Error summarizing document:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to summarize document",
-    };
+    throw error; // Re-throw instead of returning error object
   }
 }
 

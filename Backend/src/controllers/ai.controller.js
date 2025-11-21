@@ -165,17 +165,47 @@ const summarizeDocumentController = asyncHandler(async (req, res) => {
                 api_secret: process.env.CLOUDINARY_API_SECRET
             });
             
-            console.log(`Fetching document from Cloudinary using publicId: ${publicId}`);
+            console.log(`Fetching document from Cloudinary using publicId: ${publicId}, resourceType: ${resourceType}, format: ${format}`);
+            
+            // Determine the correct resource type
+            let actualResourceType = resourceType || 'auto';
+            
+            // Extract format from publicId if format is not provided
+            let detectedFormat = (format || '').toLowerCase();
+            if (!detectedFormat && publicId) {
+                const fileExtMatch = publicId.match(/\.([a-z0-9]+)$/i);
+                if (fileExtMatch) {
+                    detectedFormat = fileExtMatch[1].toLowerCase();
+                }
+            }
+            
+            // If format suggests it's an image, use 'image' resource type
+            if (detectedFormat && ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'jfif'].includes(detectedFormat)) {
+                actualResourceType = 'image';
+            }
+            // If format is PDF, use 'raw' resource type
+            else if (detectedFormat === 'pdf') {
+                actualResourceType = 'raw';
+            }
+            // If resourceType was provided, use it
+            else if (resourceType) {
+                actualResourceType = resourceType;
+            }
+            
+            console.log(`Using resource type: ${actualResourceType} for format: ${detectedFormat}`);
             
             // Get resource details
             const resource = await cloudinary.api.resource(publicId, {
-                resource_type: resourceType || 'image',
+                resource_type: actualResourceType,
                 type: 'upload'
             });
             
             const authenticatedUrl = resource.secure_url || resource.url;
-            const isImage = (resource.format && ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'jfif'].includes(resource.format.toLowerCase())) || 
-                           resourceType === 'image';
+            // Use detected format or resource format
+            const finalFormat = detectedFormat || (resource.format || '').toLowerCase();
+            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'jfif'].includes(finalFormat);
+            
+            console.log(`Final format: ${finalFormat}, isImage: ${isImage}`);
             
             if (isImage) {
                 // Fetch the image and convert to base64
@@ -188,15 +218,24 @@ const summarizeDocumentController = asyncHandler(async (req, res) => {
                 const base64 = Buffer.from(response.data).toString('base64');
                 hasImage = true;
                 imageBase64 = base64;
-                imageMimeType = `image/${resource.format === 'jpg' || resource.format === 'jfif' ? 'jpeg' : resource.format}`;
+                // Normalize MIME type
+                imageMimeType = `image/${finalFormat === 'jpg' || finalFormat === 'jfif' ? 'jpeg' : finalFormat}`;
                 
                 console.log(`Successfully fetched image document (${imageMimeType}) from Cloudinary`);
+            } else if (finalFormat === 'pdf') {
+                throw new ApiError(400, "PDF document analysis is not yet supported. Please convert PDF pages to images (PNG/JPEG) for analysis.");
             } else {
-                throw new ApiError(400, "Only image documents can be analyzed. PDF support coming soon.");
+                throw new ApiError(400, `Unsupported document format: ${finalFormat || 'unknown'}. Only image formats (PNG, JPEG, GIF) are currently supported.`);
             }
             
         } catch (error) {
             console.error("Cloudinary API error:", error);
+            
+            // If it's already an ApiError, re-throw it
+            if (error.statusCode) {
+                throw error;
+            }
+            
             throw new ApiError(400, `Failed to fetch document from cloud storage: ${error.message}`);
         }
     }

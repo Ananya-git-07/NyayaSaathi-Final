@@ -16,14 +16,34 @@ router.post("/upload", upload.single("documentFile"), async (req, res, next) => 
     if (!documentType || !documentType.trim()) throw new ApiError(400, "Document type is required.");
     if (!req.file) throw new ApiError(400, "A document file is required for upload.");
     
-    // Prefer raw for PDFs to ensure correct delivery URL
-    const isPdf = req.file.mimetype === 'application/pdf' || (req.file.originalname || '').toLowerCase().endsWith('.pdf');
+    // Detect file type properly from both MIME type and extension
+    const mimeType = req.file.mimetype;
+    const fileName = (req.file.originalname || '').toLowerCase();
+    const isPng = mimeType === 'image/png' || fileName.endsWith('.png');
+    const isJpeg = mimeType === 'image/jpeg' || mimeType === 'image/jpg' || fileName.endsWith('.jpeg') || fileName.endsWith('.jpg');
+    
+    // Use 'image' resource type for PNG and JPEG to enable image optimizations
+    const resourceType = 'image';
+    
     const cloudinaryResponse = await uploadOnCloudinary(tempFilePath, {
-      resource_type: isPdf ? 'raw' : 'auto'
+      resource_type: resourceType
     });
+    
     if (!cloudinaryResponse || !(cloudinaryResponse.secure_url || cloudinaryResponse.url)) {
       throw new ApiError(500, "Failed to upload document to cloud storage.");
     }
+
+    // Determine format from Cloudinary response or file extension
+    let fileFormat = cloudinaryResponse.format;
+    if (!fileFormat) {
+      // Extract format from filename if Cloudinary didn't provide it
+      const fileExtMatch = fileName.match(/\.([a-z0-9]+)$/i);
+      if (fileExtMatch) {
+        fileFormat = fileExtMatch[1].toLowerCase();
+      }
+    }
+
+    console.log(`Document uploaded: ${fileName}, format: ${fileFormat}, resourceType: ${cloudinaryResponse.resource_type}`);
 
     const newDocument = await Document.create({
       userId: req.user._id,
@@ -32,7 +52,7 @@ router.post("/upload", upload.single("documentFile"), async (req, res, next) => 
       fileUrl: cloudinaryResponse.secure_url || (cloudinaryResponse.url?.replace(/^http:/, 'https:')),
       publicId: cloudinaryResponse.public_id,
       resourceType: cloudinaryResponse.resource_type,
-      format: cloudinaryResponse.format,
+      format: fileFormat,
       submissionStatus: "submitted",
     });
 
@@ -170,13 +190,32 @@ router.get("/:id/download", async (req, res, next) => {
         }
       });
 
-      // Set appropriate headers
-      const contentType = fileResponse.headers['content-type'] || document.format === 'pdf' ? 'application/pdf' : 'image/jpeg';
+      // Determine correct content type based on format
+      let contentType = fileResponse.headers['content-type'];
+      
+      // If content-type not available from response, determine from document format
+      if (!contentType || contentType === 'application/octet-stream') {
+        const format = (document.format || '').toLowerCase();
+        if (format === 'pdf') {
+          contentType = 'application/pdf';
+        } else if (format === 'png') {
+          contentType = 'image/png';
+        } else if (format === 'jpg' || format === 'jpeg') {
+          contentType = 'image/jpeg';
+        } else if (format === 'gif') {
+          contentType = 'image/gif';
+        } else {
+          // Fallback: try to determine from resource type
+          contentType = document.resourceType === 'image' ? 'image/jpeg' : 'application/pdf';
+        }
+      }
+      
       const fileName = `${document.documentType.replace(/\s+/g, '_')}.${document.format || 'pdf'}`;
       
       res.setHeader('Content-Type', contentType);
       res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
       res.setHeader('Content-Length', fileResponse.data.length);
+      res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
       
       // Send the buffer
       res.send(Buffer.from(fileResponse.data));

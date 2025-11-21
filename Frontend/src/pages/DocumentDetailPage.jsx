@@ -90,6 +90,14 @@ const DocumentDetailPage = () => {
     const toastId = toast.loading("Analyzing document with AI...")
 
     try {
+      console.log('Document details for summarization:', {
+        documentType: document.documentType,
+        fileUrl: document.fileUrl,
+        publicId: document.publicId,
+        resourceType: document.resourceType,
+        format: document.format
+      });
+
       // Send document details to backend including publicId for Cloudinary API access
       const result = await summarizeLegalDocument(
         null, 

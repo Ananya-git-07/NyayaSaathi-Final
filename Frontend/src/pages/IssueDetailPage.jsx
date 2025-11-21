@@ -308,12 +308,14 @@ const IssueDetailPage = () => {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {issue.documents.map((doc) => {
-                        // Normalize Cloudinary PDF URLs that were saved under image delivery
-                        let viewUrl = doc.fileUrl || "#";
-                        if (viewUrl && /res\.cloudinary\.com\//.test(viewUrl) && /\.pdf$/i.test(viewUrl)) {
-                          viewUrl = viewUrl.replace('/image/upload/', '/raw/upload/');
-                          viewUrl = viewUrl.replace('http://', 'https://');
-                        }
+                        // Use backend download endpoint to properly serve files with correct content-type
+                        // This ensures PNG files show as PNG, JPEG as JPEG, and PDF as PDF
+                        const viewUrl = `/api/documents/${doc._id}/download`;
+                        
+                        // Determine icon based on file format
+                        const format = (doc.format || '').toLowerCase();
+                        const isImage = ['png', 'jpg', 'jpeg', 'gif'].includes(format);
+                        
                         return (
                           <motion.a 
                             key={doc._id}
@@ -324,14 +326,14 @@ const IssueDetailPage = () => {
                             className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all"
                           >
                             <div className="flex items-start gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-md">
+                              <div className={`w-10 h-10 rounded-lg ${isImage ? 'bg-gradient-to-br from-blue-500 to-cyan-500' : 'bg-gradient-to-br from-purple-500 to-pink-500'} flex items-center justify-center flex-shrink-0 shadow-md`}>
                                 <FileText className="text-white" size={20} />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-slate-900 dark:text-white break-words">{doc.documentType}</p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
                                   <ExternalLink size={12} />
-                                  {t('issueDetail.view')}
+                                  {format ? `${format.toUpperCase()} • ` : ''}{t('issueDetail.view')}
                                 </p>
                               </div>
                             </div>

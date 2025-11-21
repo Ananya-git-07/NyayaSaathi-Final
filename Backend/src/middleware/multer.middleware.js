@@ -48,15 +48,24 @@ const storage = multer.diskStorage({
 
 // File filtering for security
 const fileFilter = (req, file, cb) => {
-  // Define allowed file types
-  const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+  // Only allow image files (PNG and JPEG) for AI analysis support
+  const allowedMimeTypes = [
+    'image/jpeg',
+    'image/jpg', 
+    'image/png'
+  ];
+  
+  // Define allowed extensions
+  const allowedExtensions = /\.(jpeg|jpg|png)$/i;
+  
+  // Check both MIME type and file extension
+  const hasValidMimeType = allowedMimeTypes.includes(file.mimetype);
+  const hasValidExtension = allowedExtensions.test(file.originalname);
 
-  if (mimetype && extname) {
+  if (hasValidMimeType && hasValidExtension) {
     return cb(null, true);
   } else {
-    const error = new Error('Only images (JPEG, JPG, PNG, GIF), PDFs, and documents (DOC, DOCX, TXT) are allowed!');
+    const error = new Error(`Only PNG and JPEG image files are supported. PDF analysis is not available yet. Received: ${file.mimetype}`);
     error.code = 'INVALID_FILE_TYPE';
     cb(error);
   }

@@ -19,6 +19,7 @@ const VideoCallPage = () => {
   
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false); // User hasn't joined yet
   const [callStatus, setCallStatus] = useState("connecting"); // connecting, connected, ended
   
   // Media states
@@ -66,7 +67,7 @@ const VideoCallPage = () => {
       const sessionData = await fetchSession();
       if (sessionData) {
         initializeSocket(sessionData);
-        initializeMedia();
+        // Don't auto-initialize media - wait for user to click Join
       }
     };
     
@@ -384,7 +385,8 @@ const VideoCallPage = () => {
         localVideoRef.current.srcObject = stream;
       }
       
-      // Start the session (or join if already started)
+      // Mark as ready and start the session
+      setIsReady(true);
       await apiClient.patch(`/videosessions/sessions/${sessionId}/start`);
       setCallStatus("connected");
       
@@ -920,6 +922,70 @@ const VideoCallPage = () => {
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">Call Ended</h2>
           <p className="text-slate-400">Redirecting to dashboard...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Show Join Call screen if user hasn't joined yet
+  if (!isReady) {
+    return (
+      <div className="h-screen bg-slate-900 flex items-center justify-center">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="max-w-md w-full mx-4"
+        >
+          <div className="bg-slate-800 rounded-2xl shadow-2xl p-8 border border-slate-700">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                <Video className="text-blue-500" size={40} />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Video Consultation</h2>
+              <p className="text-slate-400">
+                {session?.status === 'in-progress' 
+                  ? 'A consultation is in progress. Join now to participate.'
+                  : 'Ready to start your video consultation?'}
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center gap-3 text-slate-300">
+                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                  <Users size={16} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Participants</p>
+                  <p className="text-xs text-slate-400">
+                    You and {user.role === 'citizen' ? 'Paralegal' : 'Citizen'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-slate-300">
+                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                  <Clock size={16} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Scheduled Time</p>
+                  <p className="text-xs text-slate-400">
+                    {session?.scheduledTime ? new Date(session.scheduledTime).toLocaleString() : 'Now'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={initializeMedia}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+            >
+              <Video size={20} />
+              <span>Join Call</span>
+            </button>
+
+            <p className="text-xs text-slate-500 text-center mt-4">
+              Make sure your camera and microphone are ready
+            </p>
+          </div>
         </motion.div>
       </div>
     );

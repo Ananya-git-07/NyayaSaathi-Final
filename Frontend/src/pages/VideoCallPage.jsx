@@ -153,6 +153,17 @@ const VideoCallPage = () => {
     }
   }, [remoteVideoRef.current]);
 
+  // Attach remote stream to video element when available
+  useEffect(() => {
+    if (remoteStream && remoteVideoRef.current) {
+      console.log('🔄 Attaching remote stream to video element via useEffect');
+      remoteVideoRef.current.srcObject = remoteStream;
+      remoteVideoRef.current.play().catch(e => {
+        console.error('Failed to play remote video:', e);
+      });
+    }
+  }, [remoteStream, remoteVideoRef.current]);
+
   const fetchSession = async () => {
     try {
       const response = await apiClient.get(`/videosessions/sessions/${sessionId}`);

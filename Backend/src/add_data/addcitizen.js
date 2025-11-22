@@ -6,7 +6,7 @@ const run = async () => {
         const citizens = [
             {
                 fullName: 'Amit Verma',
-                aadhaarNumber: '123412341234',
+                aadhaarNumber: '123445341234',
                 email: 'amit.citizen1@example.com',
                 password: 'pass12345',
                 role: 'citizen',
@@ -14,7 +14,7 @@ const run = async () => {
             },
             {
                 fullName: 'Pooja Singh',
-                aadhaarNumber: '234523452345',
+                aadhaarNumber: '234523552345',
                 email: 'pooja.citizen2@example.com',
                 password: 'pass12345',
                 role: 'citizen',
@@ -30,7 +30,7 @@ const run = async () => {
             },
             {
                 fullName: 'Sunita Devi',
-                aadhaarNumber: '456745674567',
+                aadhaarNumber: '456743674567',
                 email: 'sunita.citizen4@example.com',
                 password: 'pass12345',
                 role: 'citizen',

@@ -6,7 +6,7 @@ const run = async () => {
     try {
         const user = await User.create({
             fullName: 'Deepak Sharma',
-            aadhaarNumber: '999988887779',
+            aadhaarNumber: '999988887755',
             email: 'deepak.admin1@example.com',
             password: 'securePassword123',  // Plain password; gets hashed in pre-save
             role: 'admin',

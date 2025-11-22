@@ -4,7 +4,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, FileText, Download, Loader2, AlertCircle } from "lucide-react"
+import { X, FileText, Download, Loader2, AlertCircle, Sparkles } from "lucide-react"
 import toast from "react-hot-toast"
 import apiClient from "../api/axiosConfig"
 import { useNavigate } from "react-router-dom"
@@ -16,14 +16,14 @@ const modalVariants = {
 }
 
 const GenerateDocumentModal = ({ isOpen, onClose }) => {
-  const navigate = useNavigate() // Initialize navigate hook
-  const [docType, setDocType] = useState("Affidavit")
+  const navigate = useNavigate()
+  const [docType, setDocType] = useState("AI Draft") // Default to AI
   const [formData, setFormData] = useState({
     fullName: "",
     fatherName: "",
     village: "",
     district: "",
-    issueType: "Land Dispute",
+    issueType: "Legal Notice",
     description: "",
   })
   const [isGenerating, setIsGenerating] = useState(false)
@@ -35,10 +35,9 @@ const GenerateDocumentModal = ({ isOpen, onClose }) => {
   const handleGenerate = async (e) => {
     e.preventDefault()
     setIsGenerating(true)
-    const toastId = toast.loading("Generating document...")
+    const toastId = toast.loading(docType === 'AI Draft' ? "AI is drafting your document..." : "Generating document...")
 
     try {
-      // 1. Send request to backend
       const response = await apiClient.post(
         "/documents/generate",
         {
@@ -46,19 +45,17 @@ const GenerateDocumentModal = ({ isOpen, onClose }) => {
           data: formData,
         },
         {
-          responseType: "blob", // CRITICAL: Tells axios to handle binary data (PDF)
+          responseType: "blob", 
         }
       )
 
-      // 2. Create a download link for the PDF blob
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement("a")
       link.href = url
-      link.setAttribute("download", `${docType}_${Date.now()}.pdf`) // Filename
+      link.setAttribute("download", `${docType.replace(/\s/g, '_')}_${Date.now()}.pdf`)
       document.body.appendChild(link)
       link.click()
       
-      // Cleanup
       link.parentNode.removeChild(link)
       window.URL.revokeObjectURL(url) 
 
@@ -66,21 +63,15 @@ const GenerateDocumentModal = ({ isOpen, onClose }) => {
       onClose()
     } catch (error) {
       console.error("Generation Error:", error)
-
-      // --- ROBUST ERROR HANDLING FOR BLOBS ---
-      // When responseType is 'blob', the error response is also a blob.
-      // We need to read it to show the actual error message (e.g., "Subscription Required").
       if (error.response && error.response.data instanceof Blob) {
           const reader = new FileReader();
           reader.onload = () => {
               try {
                   const errorData = JSON.parse(reader.result);
-                  
-                  // Check for Payment Required (402)
                   if (error.response.status === 402) {
                       toast.error("Premium Feature: Please upgrade your plan.", { id: toastId });
                       onClose();
-                      navigate("/pricing"); // Redirect to pricing
+                      navigate("/pricing"); 
                   } else {
                       toast.error(errorData.message || "Failed to generate document.", { id: toastId });
                   }
@@ -139,11 +130,22 @@ const GenerateDocumentModal = ({ isOpen, onClose }) => {
                   onChange={(e) => setDocType(e.target.value)}
                   className="input-style"
                 >
-                  <option value="Affidavit">Affidavit (शपथ पत्र)</option>
-                  <option value="Complaint">Official Complaint (शिकायत पत्र)</option>
-                  <option value="Application">General Application (आवेदन)</option>
+                  <option value="AI Draft">✨ AI Auto-Draft (Universal)</option>
+                  <option value="Affidavit">Affidavit (Template)</option>
+                  <option value="Complaint">Official Complaint (Template)</option>
+                  <option value="Caste Certificate">Caste Certificate (Application)</option>
                 </select>
               </div>
+
+              {/* Dynamic Hint for AI */}
+              {docType === 'AI Draft' && (
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg flex items-start gap-3 border border-indigo-200 dark:border-indigo-800">
+                    <Sparkles className="text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" size={16} />
+                    <p className="text-xs text-indigo-700 dark:text-indigo-300">
+                      <strong>AI Mode:</strong> Just describe what you need in the "Detailed Description" box. The AI will format the legal language for you.
+                    </p>
+                  </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -168,8 +170,10 @@ const GenerateDocumentModal = ({ isOpen, onClose }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Issue Subject</label>
-                <input name="issueType" value={formData.issueType} onChange={handleChange} required className="input-style" placeholder="e.g., Land Encroachment" />
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    {docType === 'AI Draft' ? "Document Subject / Purpose" : "Issue Subject"}
+                </label>
+                <input name="issueType" value={formData.issueType} onChange={handleChange} required className="input-style" placeholder="e.g., Request for Electricity Meter" />
               </div>
 
               <div>
@@ -181,15 +185,8 @@ const GenerateDocumentModal = ({ isOpen, onClose }) => {
                   onChange={handleChange}
                   required
                   className="input-style resize-none"
-                  placeholder="Explain the facts of the case here..."
+                  placeholder={docType === 'AI Draft' ? "Explain your situation clearly. The AI will use this to write the main content." : "Explain the facts of the case here..."}
                 />
-              </div>
-
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg flex items-start gap-3 border border-yellow-200 dark:border-yellow-800">
-                <AlertCircle className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" size={16} />
-                <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                  This tool generates a draft. Please consult a lawyer or notary before submission.
-                </p>
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
@@ -202,7 +199,7 @@ const GenerateDocumentModal = ({ isOpen, onClose }) => {
                   className="btn-primary flex items-center gap-2"
                 >
                   {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
-                  {isGenerating ? "Generating..." : "Download PDF"}
+                  {isGenerating ? "Drafting & Generating..." : "Download PDF"}
                 </button>
               </div>
             </form>

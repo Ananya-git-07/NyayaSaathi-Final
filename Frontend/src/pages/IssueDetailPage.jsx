@@ -6,14 +6,15 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import {
-  ArrowLeft, AlertCircle, Calendar, User, FileText, Edit, Trash2, ExternalLink, List, CheckCircle, Upload, UserCheck, Phone
+  ArrowLeft, AlertCircle, Calendar, User, FileText, Trash2, ExternalLink, List, CheckCircle, Upload, UserCheck, Phone
 } from "lucide-react"
 import apiClient from "../api/axiosConfig"
 import Spinner from "../components/Spinner"
 import toast from "react-hot-toast"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext"
-import AssignParalegalModal from "../components/AssignParalegalModal" // Import Modal
+import AssignParalegalModal from "../components/AssignParalegalModal"
+import ChatWindow from "../components/ChatWindow" // <--- IMPORT CHAT
 
 const TimelineEvent = ({ event, isLast }) => {
     const getIcon = () => {
@@ -46,7 +47,7 @@ const IssueDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { user } = useAuth() // Get current user to check role
+  const { user } = useAuth()
   const [issue, setIssue] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -89,26 +90,31 @@ const IssueDetailPage = () => {
   const isAdminOrEmployee = user?.role === 'admin' || user?.role === 'employee';
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-6xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 py-8">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-7xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between">
         <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
           <ArrowLeft size={20} /> {t('issueDetail.back')}
         </button>
         <div className="flex gap-2">
-          {/* Show Assign Button only to Admins/Employees if not already assigned */}
           {isAdminOrEmployee && !issue.assignedParalegal && (
               <button onClick={() => setAssignModalOpen(true)} className="btn-primary flex items-center gap-2">
                   <UserCheck size={16} /> Assign Paralegal
               </button>
           )}
-          <button onClick={handleDelete} className="btn-secondary bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/50 dark:text-red-400 dark:hover:bg-red-900 dark:border-red-800">
-            <Trash2 size={16} /> {t('issueDetail.delete')}
-          </button>
+          {/* Only allow delete if not assigned or if admin */}
+          {(!issue.assignedParalegal || user.role === 'admin') && (
+             <button onClick={handleDelete} className="btn-secondary bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/50 dark:text-red-400 dark:hover:bg-red-900 dark:border-red-800">
+                <Trash2 size={16} /> {t('issueDetail.delete')}
+             </button>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* LEFT COLUMN: Issue Details */}
         <div className="lg:col-span-2 space-y-6">
+            {/* Main Info Card */}
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8">
                 <div className="flex items-start gap-4 mb-6">
                     <div className="w-16 h-16 rounded-lg bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
@@ -125,7 +131,7 @@ const IssueDetailPage = () => {
                     <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{issue.description}</p>
                 </div>
 
-                {/* Assigned Paralegal Card */}
+                {/* Assigned Paralegal Info */}
                 {issue.assignedParalegal && (
                     <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-4 flex items-start gap-4">
                         <div className="bg-cyan-100 dark:bg-cyan-800 p-2 rounded-full">
@@ -142,6 +148,7 @@ const IssueDetailPage = () => {
                 )}
             </div>
 
+            {/* Documents List */}
             {issue.documents && issue.documents.length > 0 && (
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8">
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">{t('issueDetail.relatedDocs')}</h3>
@@ -162,21 +169,29 @@ const IssueDetailPage = () => {
             )}
         </div>
 
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8 h-fit">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">{t('issueDetail.caseHistory')}</h2>
-            {issue.history && issue.history.length > 0 ? (
-                <ul>
-                    {issue.history.map((event, index) => (
-                        <TimelineEvent key={event._id || index} event={event} isLast={index === issue.history.length - 1} />
-                    ))}
-                </ul>
-            ) : (
-                <p className="text-slate-500 dark:text-slate-400">{t('issueDetail.noHistory')}</p>
+        {/* RIGHT COLUMN: History & Chat */}
+        <div className="space-y-6">
+            {/* Chat Section - Only visible if assigned */}
+            {issue.assignedParalegal && (
+                <ChatWindow issueId={id} />
             )}
+
+            {/* History Timeline */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-8">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">{t('issueDetail.caseHistory')}</h2>
+                {issue.history && issue.history.length > 0 ? (
+                    <ul>
+                        {issue.history.map((event, index) => (
+                            <TimelineEvent key={event._id || index} event={event} isLast={index === issue.history.length - 1} />
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-slate-500 dark:text-slate-400">{t('issueDetail.noHistory')}</p>
+                )}
+            </div>
         </div>
       </div>
 
-      {/* Modal */}
       <AssignParalegalModal 
         isOpen={isAssignModalOpen} 
         onClose={() => setAssignModalOpen(false)} 

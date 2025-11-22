@@ -1,111 +1,91 @@
-
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
-// --- Helper Function for Token Generation ---
+// --- Helper: Generate Access & Refresh Tokens ---
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId);
-        if (!user) {
-            throw new ApiError(404, "User not found while generating tokens");
-        }
+        if (!user) throw new ApiError(404, "User not found");
 
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
 
-        user.refreshToken = refreshToken;
+        const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+
+        user.refreshToken = hashedRefreshToken;
         await user.save({ validateBeforeSave: false });
 
         return { accessToken, refreshToken };
     } catch (error) {
-        // This will be caught by asyncHandler
-        throw new ApiError(500, "Something went wrong while generating tokens");
+        console.error("Token generation failed:", error);
+        throw new ApiError(500, "Error generating tokens");
     }
 };
 
-// --- Secure Cookie Options ---
+// --- Cookie Options ---
 const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // Only use secure cookies in production
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
-
-// === CONTROLLERS ===
+// ==================== CONTROLLERS ====================
 
 // 1. Register User
 export const registerUser = asyncHandler(async (req, res) => {
     const { fullName, email, password, aadhaarNumber, role, phoneNumber, department, designation, roleLevel, kioskId, areasOfExpertise } = req.body;
 
-    if ([fullName, email, password, aadhaarNumber, role].some((field) => !field || field.trim() === "")) {
-        throw new ApiError(400, "All required fields must be filled.");
+    if (!fullName?.trim() || !email?.trim() || !password?.trim() || !aadhaarNumber?.trim() || !role?.trim()) {
+        throw new ApiError(400, "All required fields must be filled");
     }
 
     const existedUser = await User.findOne({ $or: [{ email }, { aadhaarNumber }] });
     if (existedUser) {
-        throw new ApiError(409, "User with this email or Aadhaar number already exists.");
+        throw new ApiError(409, "User with this email or Aadhaar already exists");
     }
 
-    // Create the base user
     const user = await User.create({ fullName, email, password, aadhaarNumber, role, phoneNumber });
 
-    // Create role-specific records
-    if (role === 'paralegal') {
-        if (!phoneNumber) {
-            throw new ApiError(400, "Phone number is required for paralegals.");
-        }
-        if (!areasOfExpertise || areasOfExpertise.length === 0) {
-            throw new ApiError(400, "At least one area of expertise is required for paralegals.");
-        }
-        
-        const Paralegal = (await import('../models/Paralegal.js')).default;
+    // ---- Role Specific Models ----
+    if (role === "paralegal") {
+        if (!phoneNumber) throw new ApiError(400, "Phone is required for paralegals");
+        if (!areasOfExpertise?.length) throw new ApiError(400, "Areas of expertise required");
+
+        const Paralegal = (await import("../models/Paralegal.js")).default;
         await Paralegal.create({
-            user: user._id,
-            phoneNumber,
-            areasOfExpertise,
-            active: true,
-            rating: 0,
-            isDeleted: false
+            user: user._id, phoneNumber, areasOfExpertise, active: true, rating: 0, isDeleted: false
         });
-    } else if (role === 'employee') {
-        if (!department || !designation || !roleLevel || !kioskId) {
-            throw new ApiError(400, "Department, designation, role level, and kiosk are required for employees.");
-        }
-        
-        const Employee = (await import('../models/Employee.js')).default;
+    }
+
+    if (role === "employee") {
+        if (!department || !designation || !roleLevel || !kioskId)
+            throw new ApiError(400, "All employee details required");
+
+        const Employee = (await import("../models/Employee.js")).default;
         await Employee.create({
-            user: user._id,
-            kioskId: kioskId,
-            department,
-            designation,
-            roleLevel,
-            isDeleted: false
+            user: user._id, kioskId, department, designation, roleLevel, isDeleted: false
         });
-    } else if (role === 'admin') {
-        if (!phoneNumber || !department || !designation) {
-            throw new ApiError(400, "Phone number, department, and designation are required for admins.");
-        }
-        
-        const Admin = (await import('../models/Admin.js')).default;
+    }
+
+    if (role === "admin") {
+        if (!phoneNumber || !department || !designation)
+            throw new ApiError(400, "All admin details required");
+
+        const Admin = (await import("../models/Admin.js")).default;
         await Admin.create({
-            user: user._id,
-            phoneNumber,
-            department,
-            designation,
-            isDeleted: false
+            user: user._id, phoneNumber, department, designation, isDeleted: false
         });
     }
 
     const createdUser = await User.findById(user._id).select("-password -refreshToken");
-    if (!createdUser) {
-        throw new ApiError(500, "Something went wrong while registering the user.");
-    }
 
     return res.status(201).json(
-        new ApiResponse(201, createdUser, "User registered successfully.")
+        new ApiResponse(201, createdUser, "User registered successfully")
     );
 });
 
@@ -113,72 +93,66 @@ export const registerUser = asyncHandler(async (req, res) => {
 // 2. Login User
 export const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-    if (!email || !password) {
-        throw new ApiError(400, "Email and password are required.");
-    }
+
+    if (!email?.trim() || !password?.trim()) throw new ApiError(400, "Email and password required");
 
     const user = await User.findOne({ email, isDeleted: false });
-    if (!user) {
-        throw new ApiError(404, "User does not exist.");
-    }
+    if (!user) throw new ApiError(404, "User does not exist");
 
     const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
-        throw new ApiError(401, 'Invalid user credentials.');
-    }
+    if (!isPasswordValid) throw new ApiError(401, "Invalid credentials");
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
-    return res
-        .status(200)
+    return res.status(200)
         .cookie("accessToken", accessToken, cookieOptions)
         .cookie("refreshToken", refreshToken, cookieOptions)
-        .json(new ApiResponse(200, { user: loggedInUser, accessToken }, "User logged in successfully."));
+        .json(new ApiResponse(200, { user: loggedInUser, accessToken }, "Login successful"));
 });
 
 
 // 3. Logout User
 export const logoutUser = asyncHandler(async (req, res) => {
-    await User.findByIdAndUpdate(req.user._id, { $unset: { refreshToken: 1 } }, { new: true });
+    await User.findByIdAndUpdate(req.user._id, { $unset: { refreshToken: 1 } });
 
-    return res
-        .status(200)
+    return res.status(200)
         .clearCookie("accessToken", cookieOptions)
         .clearCookie("refreshToken", cookieOptions)
-        .json(new ApiResponse(200, {}, "User logged out successfully."));
+        .json(new ApiResponse(200, {}, "Logout successful"));
 });
 
 
 // 4. Refresh Access Token
 export const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
-    if (!incomingRefreshToken) {
-        throw new ApiError(401, "Unauthorized: No refresh token provided.");
+    if (!incomingRefreshToken) throw new ApiError(401, "No refresh token provided");
+
+    let decoded;
+    try {
+        decoded = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+    } catch {
+        throw new ApiError(401, "Refresh token expired or malformed");
     }
 
-    const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
-    const user = await User.findById(decodedToken?._id);
+    const user = await User.findById(decoded?._id);
+    if (!user || !user.refreshToken) throw new ApiError(401, "User not found");
 
-    if (!user || incomingRefreshToken !== user?.refreshToken) {
-        throw new ApiError(401, "Refresh token is invalid or has expired.");
-    }
+    const isValid = await bcrypt.compare(incomingRefreshToken, user.refreshToken);
+    if (!isValid) throw new ApiError(401, "Invalid refresh token");
 
     const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
 
-    return res
-        .status(200)
+    return res.status(200)
         .cookie("accessToken", accessToken, cookieOptions)
         .cookie("refreshToken", newRefreshToken, cookieOptions)
-        .json(new ApiResponse(200, { accessToken, refreshToken: newRefreshToken }, "Access token refreshed successfully."));
+        .json(new ApiResponse(200, { accessToken, refreshToken: newRefreshToken }, "Token refreshed"));
 });
 
 
-// 5. Get Current Logged-In User
+// 5. Get current user
 export const getCurrentUser = asyncHandler(async (req, res) => {
-    // The user object is attached to the request by the authMiddleware
     return res.status(200).json(
-        new ApiResponse(200, req.user, "Current user fetched successfully.")
-   
+        new ApiResponse(200, req.user, "Current user fetched")
     );
 });

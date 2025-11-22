@@ -158,12 +158,37 @@ const VideoCallPage = () => {
   useEffect(() => {
     if (remoteStream && remoteVideoRef.current) {
       console.log('🔄 Attaching remote stream to video element via useEffect');
+      console.log('📊 Remote stream info:', {
+        id: remoteStream.id,
+        active: remoteStream.active,
+        tracks: remoteStream.getTracks().map(t => ({
+          kind: t.kind,
+          id: t.id,
+          enabled: t.enabled,
+          readyState: t.readyState,
+          muted: t.muted
+        }))
+      });
+      
       remoteVideoRef.current.srcObject = remoteStream;
+      
+      // Force video element properties
+      remoteVideoRef.current.muted = false; // Ensure audio plays
+      remoteVideoRef.current.volume = 1.0;
+      
       remoteVideoRef.current.play().catch(e => {
         console.error('Failed to play remote video:', e);
+        // Try again with user interaction
+        const playAttempt = () => {
+          remoteVideoRef.current?.play().then(() => {
+            console.log('✅ Remote video playing after retry');
+            document.removeEventListener('click', playAttempt);
+          });
+        };
+        document.addEventListener('click', playAttempt, { once: true });
       });
     }
-  }, [remoteStream, remoteVideoRef.current]);
+  }, [remoteStream]);
 
   const fetchSession = async () => {
     try {
@@ -1009,8 +1034,18 @@ const VideoCallPage = () => {
                 onPlay={() => console.log('▶️ Remote video playing')}
                 onError={(e) => console.error('❌ Remote video error:', e)}
               />
-              {/* Show placeholder if remote video track is not active */}
-              {remoteStream.getVideoTracks().length === 0 && (
+              {/* Show placeholder if remote video track is not active or enabled */}
+              {(() => {
+                const videoTracks = remoteStream.getVideoTracks();
+                const hasActiveVideo = videoTracks.length > 0 && videoTracks[0].enabled && videoTracks[0].readyState === 'live';
+                console.log('🎥 Remote video status:', { 
+                  trackCount: videoTracks.length, 
+                  enabled: videoTracks[0]?.enabled, 
+                  readyState: videoTracks[0]?.readyState,
+                  hasActiveVideo 
+                });
+                return !hasActiveVideo;
+              })() && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
                   <div className="text-center">
                     <VideoOff className="text-slate-400 mx-auto mb-4" size={80} />

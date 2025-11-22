@@ -10,6 +10,11 @@ import authMiddleware from '../middleware/authMiddleware.js';
 
 const router = Router();
 
+// Test route to confirm public access works
+router.get('/test', (req, res) => {
+    res.json({ success: true, message: 'Auth routes are accessible without authentication' });
+});
+
 // --- PUBLIC ROUTES (No token needed) ---
 router.post('/register', registerUser);
 router.post('/login', loginUser);

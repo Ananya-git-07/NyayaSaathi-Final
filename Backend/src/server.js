@@ -140,6 +140,16 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 
+// Add detailed request logging for debugging
+app.use((req, res, next) => {
+  console.log(`🔍 [${req.method}] ${req.path} from ${req.headers.origin || 'no origin'}`);
+  console.log(`   Headers:`, { 
+    auth: req.headers.authorization ? 'present' : 'none',
+    cookie: req.headers.cookie ? 'present' : 'none' 
+  });
+  next();
+});
+
 const apiRouter = express.Router();
 
 apiRouter.get("/", (req, res) => {
@@ -167,9 +177,15 @@ console.log("🌐 Setting up public routes...");
 Object.entries(routeModules).forEach(([name, config]) => {
   if (config.public && config.handler) {
     apiRouter.use(`/${name}`, config.handler);
-    console.log(`  ✅ Public route: /api/${name}`);
+    console.log(`  ✅ Public route: /api/${name} (accessible without auth)`);
   }
 });
+
+console.log("\n📋 Route modules loaded:");
+Object.entries(routeModules).forEach(([name, config]) => {
+  console.log(`  - ${name}: public=${config.public}`);
+});
+console.log("");
 
 if (authMiddleware) {
   console.log("🔐 Setting up authentication middleware...");

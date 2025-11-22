@@ -5,6 +5,9 @@ import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const verifyJWT = asyncHandler(async (req, res, next) => {
+    // Log when middleware is triggered
+    console.log(`🔐 Auth middleware triggered for: ${req.method} ${req.path}`);
+    
     // --- HARDENED CHECK ---
     if (!process.env.ACCESS_TOKEN_SECRET) {
         console.error("FATAL: ACCESS_TOKEN_SECRET is not defined in .env file. Authentication is disabled.");
@@ -15,6 +18,7 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
 
         if (!token) {
+            console.log(`❌ No token provided for ${req.method} ${req.path}`);
             return res.status(401).json({ success: false, message: "Unauthorized request: No token provided." });
         }
         

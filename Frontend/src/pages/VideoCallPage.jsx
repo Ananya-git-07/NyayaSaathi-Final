@@ -25,6 +25,7 @@ const VideoCallPage = () => {
   // Media states
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
+  const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [screenSharing, setScreenSharing] = useState(false);
@@ -158,9 +159,17 @@ const VideoCallPage = () => {
   useEffect(() => {
     if (remoteStream && remoteVideoRef.current) {
       console.log('🔄 Attaching remote stream to video element via useEffect');
+      
+      const videoTracks = remoteStream.getVideoTracks();
+      const audioTracks = remoteStream.getAudioTracks();
+      const hasActiveVideo = videoTracks.length > 0 && videoTracks[0].enabled && videoTracks[0].readyState === 'live';
+      
       console.log('📊 Remote stream info:', {
         id: remoteStream.id,
         active: remoteStream.active,
+        videoTracks: videoTracks.length,
+        audioTracks: audioTracks.length,
+        hasActiveVideo,
         tracks: remoteStream.getTracks().map(t => ({
           kind: t.kind,
           id: t.id,
@@ -170,6 +179,7 @@ const VideoCallPage = () => {
         }))
       });
       
+      setHasRemoteVideo(hasActiveVideo);
       remoteVideoRef.current.srcObject = remoteStream;
       
       // Force video element properties
@@ -1035,17 +1045,7 @@ const VideoCallPage = () => {
                 onError={(e) => console.error('❌ Remote video error:', e)}
               />
               {/* Show placeholder if remote video track is not active or enabled */}
-              {(() => {
-                const videoTracks = remoteStream.getVideoTracks();
-                const hasActiveVideo = videoTracks.length > 0 && videoTracks[0].enabled && videoTracks[0].readyState === 'live';
-                console.log('🎥 Remote video status:', { 
-                  trackCount: videoTracks.length, 
-                  enabled: videoTracks[0]?.enabled, 
-                  readyState: videoTracks[0]?.readyState,
-                  hasActiveVideo 
-                });
-                return !hasActiveVideo;
-              })() && (
+              {!hasRemoteVideo && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
                   <div className="text-center">
                     <VideoOff className="text-slate-400 mx-auto mb-4" size={80} />

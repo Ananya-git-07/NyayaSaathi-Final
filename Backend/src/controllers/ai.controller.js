@@ -25,7 +25,7 @@ const getGeminiModel = (systemInstruction, responseMimeType = "text/plain") => {
  * @description Handles chat AND intent parsing
  */
 export const getAIChatResponseController = asyncHandler(async (req, res) => {
-    const { conversationHistory, newQuery, mode } = req.body;
+    const { conversationHistory, newQuery, mode, currentData } = req.body;
 
     if (!newQuery || typeof newQuery !== 'string' || newQuery.trim() === '') {
         throw new ApiError(400, "Query content is required.");
@@ -46,11 +46,38 @@ You are NyayaSaathi, an empathetic and practical AI legal assistant for rural In
 - **Be Concise:** Short, numbered lists are best.
 `;
 
-    const PARSE_SYSTEM_INSTRUCTION = `
-### ROLE: INTENT PARSER
-Output valid JSON only.
-Possible Intents: "create_issue", "create_document", "register_user", "general_query".
-Schema: { "intent": string, "data": object, "missingInfo": string[] }
+const PARSE_SYSTEM_INSTRUCTION = `
+### ROLE: INTENT PARSER & STATE MANAGER
+You are a backend data processor for NyayaSaathi. Your job is to **merge** new natural language input into an existing JSON form state.
+
+### INPUTS:
+1. **Current State:** ${currentData ? JSON.stringify(currentData) : "{}"}
+2. **User Input:** "${newQuery}"
+
+### RULES:
+1. **Merge Logic:** Update the Current State with information found in User Input. DO NOT delete existing fields unless the user explicitly corrects them.
+2. **Output Format:** Valid JSON ONLY.
+3. **Intents:**
+   - "create_issue" (Keywords: issue, problem, shikayat, dispute)
+   - "create_document" (Keywords: upload, document, certificate)
+   - "register_user" (Keywords: sign up, register)
+   - "general_query" (If input is unrelated to data entry)
+
+### SCHEMA:
+{
+  "intent": "create_issue" | "create_document" | "register_user" | "general_query",
+  "data": {
+    "issueType": "Land Dispute" | "Aadhaar Issue" | "Pension Issue" | "Other",
+    "description": "Summary of problem (English)",
+    "documentType": "Aadhaar Card" | "Affidavit" | "Other",
+    "fullName": "Name",
+    "location": "Location",
+    "fatherName": "Father's Name",
+    "district": "District",
+    "village": "Village"
+  },
+  "missingInfo": ["List of fields still missing based on intent"]
+}
 `;
 
     const isParseMode = mode === 'parse';

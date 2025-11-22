@@ -1,22 +1,29 @@
+// Backend/src/routes/authRoutes.js
+
 import { Router } from 'express';
 import { 
     registerUser, 
     loginUser, 
     logoutUser, 
     refreshAccessToken,
-    getCurrentUser
-} from '../controllers/auth.controllers.js'; // <-- CORRECT FILENAME HERE
-import authMiddleware from '../middleware/authMiddleware.js';
+    getCurrentUser,
+    registerCitizenByKiosk // <--- IMPORT THIS
+} from '../controllers/auth.controllers.js';
+import verifyJWT from '../middleware/authMiddleware.js';
+import { verifyRole } from '../middleware/roleMiddleware.js'; // <--- IMPORT THIS
 
 const router = Router();
 
-// --- PUBLIC ROUTES (No token needed) ---
+// --- PUBLIC ROUTES ---
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/refresh-token', refreshAccessToken);
 
-// --- PROTECTED ROUTES (Requires a valid JWT) ---
-router.post('/logout', authMiddleware, logoutUser);
-router.get('/current-user', authMiddleware, getCurrentUser);
+// --- PROTECTED ROUTES ---
+router.post('/logout', verifyJWT, logoutUser);
+router.get('/current-user', verifyJWT, getCurrentUser);
 
-export default router;  
+// --- KIOSK ONLY ROUTE ---
+router.post('/kiosk-register-citizen', verifyJWT, verifyRole('employee', 'admin'), registerCitizenByKiosk);
+
+export default router;

@@ -82,34 +82,57 @@ const UnifiedCommandModal = ({ isOpen, onClose, onSuccess }) => {
 
     try {
       if (!currentStep) {
-        // Initial command processing
-        const command = parseInitialCommand(inputText)
-        if (command) {
-          setCurrentStep(command)
-          addMessage(getNextQuestion(command, {}))
-        } else {
-          addMessage(
-            "I can help you create issues, documents, or manage other data. Try saying 'create issue' or 'add document'.",
-          )
+        // --- INITIAL COMMAND ---
+        // Pass empty object as currentData
+        const parsed = await aiService.parseUserIntent(inputText, {});
+        
+        if (parsed.intent === "general_query") {
+            addMessage(parsed.data.description || "I can help you register issues or documents.");
+        } 
+        else if (parsed.intent) {
+            const stepType = mapIntentToStep(parsed.intent);
+            if (stepType) {
+                const initialData = parsed.data || {};
+                setFormData(initialData);
+                
+                const stepObj = { type: stepType, data: initialData };
+                setCurrentStep(stepObj);
+                
+                const nextQ = getNextQuestion(stepObj, initialData);
+                if (nextQ === "COMPLETE") {
+                    await submitData(stepType, initialData);
+                } else {
+                    // AI has started the form, now we enter the loop
+                    addMessage(`Starting ${stepType.replace('_', ' ')}. ${nextQ}`);
+                }
+            }
         }
       } else {
-        // Handle step-by-step data collection
-        const updatedData = await handleStepInput(inputText)
-        const nextQuestion = getNextQuestion(currentStep, updatedData)
+        // --- CONTEXTUAL UPDATE LOOP ---
+        // CRITICAL CHANGE: We pass 'formData' (the existing state) to the AI
+        // This allows the AI to MERGE the new input with the old data
+        const parsed = await aiService.parseUserIntent(inputText, formData);
+        
+        // The AI returns the MERGED object in parsed.data
+        const mergedData = { ...formData, ...parsed.data };
+        
+        setFormData(mergedData);
+        setCurrentStep({ ...currentStep, data: mergedData });
+
+        const nextQuestion = getNextQuestion(currentStep, mergedData);
 
         if (nextQuestion === "COMPLETE") {
-          await submitData()
+          await submitData(currentStep.type, mergedData);
         } else {
-          addMessage(nextQuestion)
+          addMessage(nextQuestion);
         }
       }
     } catch (error) {
-      addMessage(`Error: ${error.message}`)
+      addMessage(`Sorry, I encountered an error: ${error.message}`)
     } finally {
       setIsProcessing(false)
     }
   }
-
   const parseInitialCommand = (text) => {
     const lowerText = text.toLowerCase()
 

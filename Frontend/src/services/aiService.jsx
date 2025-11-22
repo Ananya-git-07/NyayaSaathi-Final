@@ -11,7 +11,7 @@ const getGenerativeAIChatResponse = async (conversationHistory, newQuery) => {
     const { data } = await apiClient.post('/ai/chat', {
       conversationHistory,
       newQuery,
-      mode: 'chat' // Default mode
+      mode: 'chat'
     });
 
     if (data.success && data.data.response) {
@@ -26,26 +26,25 @@ const getGenerativeAIChatResponse = async (conversationHistory, newQuery) => {
 };
 
 /**
- * Sends natural language to the backend to extract structured intent and data.
- * @param {string} text - The user's spoken or typed input.
- * @returns {object} - Structured JSON { intent, data, missingInfo }
+ * Sends natural language AND current form state to the backend.
+ * @param {string} text - The user's spoken input.
+ * @param {object} currentData - The existing form data (to allow merging).
  */
-const parseUserIntent = async (text) => {
+const parseUserIntent = async (text, currentData = {}) => {
   try {
     const { data } = await apiClient.post('/ai/chat', {
       newQuery: text,
+      currentData: currentData, // <--- SENDING CONTEXT
       mode: 'parse'
     });
 
     if (data.success && data.data.parsed) {
       return data.data.parsed;
     } else {
-      // Fallback if backend didn't return parsed object
       return JSON.parse(data.data.response);
     }
   } catch (error) {
     console.error("AI Parse Error:", error);
-    // Fallback to basic regex if API fails
     return parseFormDataRegex(text);
   }
 };
@@ -56,17 +55,14 @@ const parseFormDataRegex = (text) => {
   let intent = 'general_query';
   const data = {};
 
-  if (lowerText.includes('issue') || lowerText.includes('complaint') || lowerText.includes('problem')) {
+  if (lowerText.includes('issue') || lowerText.includes('complaint')) {
     intent = 'create_issue';
     if (lowerText.includes('aadhaar')) data.issueType = "Aadhaar Issue";
     else if (lowerText.includes('land')) data.issueType = "Land Dispute";
-    else if (lowerText.includes('pension')) data.issueType = "Pension Issue";
-    else data.issueType = "Other";
     data.description = text;
-  } else if (lowerText.includes('document') || lowerText.includes('upload')) {
+  } else if (lowerText.includes('document')) {
     intent = 'create_document';
-    if (lowerText.includes('aadhaar')) data.documentType = "Aadhaar Card";
-    else data.documentType = "Other";
+    data.documentType = "Other";
   }
 
   return { intent, data, missingInfo: [] };
@@ -75,5 +71,5 @@ const parseFormDataRegex = (text) => {
 export const aiService = {
   getChatResponse: getGenerativeAIChatResponse,
   parseUserIntent,
-  parseFormDataFromText: parseFormDataRegex // Keep for backward compatibility if needed
+  parseFormDataFromText: parseFormDataRegex
 };

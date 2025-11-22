@@ -134,3 +134,43 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
    
     );
 });
+
+// ... existing imports
+// Append this new controller function:
+
+// 6. Register a Citizen (On-Behalf-Of Mode for Kiosks)
+export const registerCitizenByKiosk = asyncHandler(async (req, res) => {
+    const { fullName, email, password, aadhaarNumber, phoneNumber } = req.body;
+
+    if (!fullName || !password || !aadhaarNumber) {
+        throw new ApiError(400, "Full Name, Password, and Aadhaar are required.");
+    }
+
+    // Handle situations where villager has no email - generate a dummy placeholder
+    const finalEmail = email || `${aadhaarNumber}@nyayasaathi.local`;
+
+    const existedUser = await User.findOne({ $or: [{ email: finalEmail }, { aadhaarNumber }] });
+    if (existedUser) {
+        throw new ApiError(409, "User with this Aadhaar or Email already exists.");
+    }
+
+    // Create the citizen
+    const citizen = await User.create({
+        fullName,
+        email: finalEmail,
+        password, // Operator sets a temporary password
+        aadhaarNumber,
+        phoneNumber,
+        role: 'citizen',
+        isDeleted: false
+    });
+
+    const createdUser = await User.findById(citizen._id).select("-password -refreshToken");
+
+    return res.status(201).json(
+        new ApiResponse(201, createdUser, "Citizen registered successfully by Kiosk.")
+    );
+});
+
+// Don't forget to update the export statement at the bottom
+export { registerUser, loginUser, logoutUser, refreshAccessToken, getCurrentUser, registerCitizenByKiosk };

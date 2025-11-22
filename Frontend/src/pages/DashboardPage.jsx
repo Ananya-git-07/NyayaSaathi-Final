@@ -9,19 +9,10 @@ import Spinner from "../components/Spinner"
 import AddIssueModal from "../components/AddIssueModal"
 import AddDocumentModal from "../components/AddDocumentModal"
 import GenerateDocumentModal from "../components/GenerateDocumentModal"
+import RegisterCitizenModal from "../components/RegisterCitizenModal" // Import New Modal
 import {
-  FileText,
-  Trash2,
-  Plus,
-  AlertCircle,
-  Calendar,
-  BarChart3,
-  Eye,
-  ExternalLink,
-  MapPin,
-  PenTool,
-  UserCheck,
-  Briefcase
+  FileText, Trash2, Plus, AlertCircle, Calendar, BarChart3, Eye, ExternalLink, MapPin,
+  PenTool, UserCheck, Briefcase, Store, UserPlus, Users
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import toast from "react-hot-toast"
@@ -65,41 +56,42 @@ const DashboardPage = () => {
   const [isAddIssueModalOpen, setAddIssueModalOpen] = useState(false)
   const [isAddDocumentModalOpen, setAddDocumentModalOpen] = useState(false)
   const [isGenerateModalOpen, setGenerateModalOpen] = useState(false)
+  const [isRegisterCitizenOpen, setRegisterCitizenOpen] = useState(false) // New State
 
   // --- ROLE CHECK ---
   const isParalegal = user?.role === 'paralegal';
   const isAdmin = user?.role === 'admin';
+  const isEmployee = user?.role === 'employee'; // Kiosk Operator
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       let issuesEndpoint = "/citizens/issues";
       
-      // Paralegals and Admins hit the generic /issues endpoint which has logic to filter based on their role
-      if (isParalegal || isAdmin) {
+      // Paralegals, Employees, and Admins hit the generic /issues endpoint
+      if (isParalegal || isAdmin || isEmployee) {
           issuesEndpoint = "/issues";
       }
 
       const [issuesResponse, documentsResponse] = await Promise.all([
         apiClient.get(issuesEndpoint),
-        // Paralegals might not need 'my documents', but we keep it for now or filter it similarly
-        apiClient.get("/citizens/documents"), 
+        // Only citizens need 'my documents'. Others can see empty or filtered list.
+        isEmployee || isParalegal ? Promise.resolve({ data: { documents: [] } }) : apiClient.get("/citizens/documents"), 
       ]);
 
       setData({
-        issues: issuesResponse.data.data || issuesResponse.data.issues || [], // Handle different response structures
+        issues: issuesResponse.data.data || issuesResponse.data.issues || [],
         documents: documentsResponse.data.documents || documentsResponse.data.data || [],
       });
     } catch (err) {
       console.error("Dashboard fetch error:", err);
-      // Don't show error on 404 (just means empty), show actual errors
       if (err.response?.status !== 404) {
           setError(err.message || "Failed to fetch data.");
       }
     } finally {
       setLoading(false);
     }
-  }, [isParalegal, isAdmin]);
+  }, [isParalegal, isAdmin, isEmployee]);
 
   useEffect(() => {
     fetchData();
@@ -125,26 +117,30 @@ const DashboardPage = () => {
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case "resolved":
-      case "accepted":
-        return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800";
-      case "submitted":
-      case "in progress":
-        return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
-      case "pending":
-      case "not_submitted":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800";
-      case "escalated":
-        return "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800";
-      case "rejected":
-        return "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800";
-      default:
-        return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600";
+      case "resolved": return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800";
+      case "submitted": return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800";
+      case "pending": return "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800";
+      case "escalated": return "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800";
+      case "rejected": return "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800";
+      default: return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600";
     }
   };
 
   if (loading) return <div className="h-screen w-full flex items-center justify-center"><Spinner /></div>;
   if (error) return <div className="w-full max-w-4xl text-center p-8 bg-red-50 text-red-700 rounded-lg border border-red-200"><AlertCircle className="mx-auto mb-4" size={48} /><p>{error}</p></div>;
+
+  // Dynamic Title based on role
+  const getDashboardTitle = () => {
+      if (isParalegal) return `Paralegal Workspace: ${user?.fullName}`;
+      if (isEmployee) return `Kiosk Dashboard: ${user?.fullName}`;
+      return t('dashboardPage.welcome', { name: user?.fullName });
+  }
+
+  const getDashboardSubtitle = () => {
+      if (isParalegal) return "Manage your assigned cases.";
+      if (isEmployee) return "Manage citizen registrations and kiosk issues.";
+      return t('dashboardPage.subtitle');
+  }
 
   return (
     <>
@@ -153,22 +149,21 @@ const DashboardPage = () => {
         {/* --- HEADER SECTION --- */}
         <motion.div className="flex flex-wrap justify-between items-center gap-4" variants={itemVariants}>
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
-                {isParalegal ? `Paralegal Workspace: ${user?.fullName}` : t('dashboardPage.welcome', { name: user?.fullName })}
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">
-                {isParalegal ? "Manage your assigned cases and update statuses." : t('dashboardPage.subtitle')}
-            </p>
+            <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">{getDashboardTitle()}</h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">{getDashboardSubtitle()}</p>
           </div>
           
-          {/* TOOLS (Available to all, but context changes) */}
+          {/* TOOLS */}
           <div className="flex gap-3">
-             <button 
-                onClick={() => setGenerateModalOpen(true)} 
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md flex items-center gap-2 transition-all"
-             >
+             {isEmployee && (
+                 <button onClick={() => setRegisterCitizenOpen(true)} className="btn-secondary flex items-center gap-2">
+                    <UserPlus size={18} />
+                    <span>Register Citizen</span>
+                 </button>
+             )}
+             <button onClick={() => setGenerateModalOpen(true)} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md flex items-center gap-2 transition-all">
                 <PenTool size={18} />
-                <span>{isParalegal ? "Generate Legal Draft" : "Draft Legal Document"}</span>
+                <span>{isParalegal ? "Generate Legal Draft" : "Draft Document"}</span>
              </button>
           </div>
         </motion.div>
@@ -177,14 +172,14 @@ const DashboardPage = () => {
         <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-6" variants={itemVariants}>
           <StatCard 
             icon={<AlertCircle size={24} className="text-red-600 dark:text-red-400" />} 
-            title={isParalegal ? "Assigned Cases" : t('dashboardPage.activeIssues')} 
-            value={data.issues.filter(i => i.status !== "Resolved").length} 
+            title={isParalegal ? "Assigned Cases" : (isEmployee ? "Kiosk Issues" : t('dashboardPage.activeIssues'))} 
+            value={data.issues.length} 
             colorClasses="bg-gradient-to-br from-red-50 to-pink-50 border-red-200 dark:from-red-900/30 dark:to-pink-900/30 dark:border-red-800" 
           />
           <StatCard 
-            icon={isParalegal ? <Briefcase size={24} className="text-blue-600"/> : <FileText size={24} className="text-blue-600 dark:text-blue-400" />} 
-            title={isParalegal ? "Active Workload" : t('dashboardPage.totalDocuments')} 
-            value={isParalegal ? data.issues.filter(i => i.status === "Escalated").length : data.documents.length} 
+            icon={isParalegal ? <Briefcase size={24} className="text-blue-600"/> : (isEmployee ? <Users size={24} className="text-blue-600"/> : <FileText size={24} className="text-blue-600 dark:text-blue-400" />)} 
+            title={isParalegal ? "Active Workload" : (isEmployee ? "Citizens Served" : t('dashboardPage.totalDocuments'))} 
+            value={isEmployee ? new Set(data.issues.map(i => i.userId?._id)).size : data.documents.length} 
             colorClasses="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 dark:from-blue-900/30 dark:to-cyan-900/30 dark:border-blue-800" 
           />
           <StatCard 
@@ -200,9 +195,10 @@ const DashboardPage = () => {
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                {isParalegal ? <Briefcase size={24} className="text-cyan-600"/> : <AlertCircle size={24} className="text-cyan-600 dark:text-cyan-400" />} 
-                {isParalegal ? "Assigned Case Queue" : t('dashboardPage.issuesTitle')}
+                {isParalegal ? <Briefcase size={24} className="text-cyan-600"/> : (isEmployee ? <Store size={24} className="text-cyan-600"/> : <AlertCircle size={24} className="text-cyan-600 dark:text-cyan-400" />)} 
+                {isParalegal ? "Assigned Case Queue" : (isEmployee ? "Kiosk Issue Registry" : t('dashboardPage.issuesTitle'))}
               </h2>
+              {/* Employees and Citizens can add issues. Paralegals cannot. */}
               {!isParalegal && (
                   <button onClick={() => setAddIssueModalOpen(true)} className="btn-secondary flex items-center gap-2">
                     <Plus size={16} /> {t('dashboardPage.addIssue')}
@@ -220,8 +216,9 @@ const DashboardPage = () => {
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-bold text-slate-900 dark:text-white text-lg">{issue.issueType}</h3>
                             <span className={`text-xs px-3 py-1 rounded-full border ${getStatusColor(issue.status)}`}>{issue.status}</span>
-                            {/* Show Client Name for Paralegals */}
-                            {isParalegal && issue.userId && (
+                            
+                            {/* Show Client Name for Paralegals AND Employees */}
+                            {(isParalegal || isEmployee) && issue.userId && (
                                 <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded flex items-center gap-1">
                                     <UserCheck size={12}/> Client: {issue.userId.fullName}
                                 </span>
@@ -237,7 +234,7 @@ const DashboardPage = () => {
                           </div>
                         </div>
                         
-                        {/* Only Citizens/Admins can delete. Paralegals cannot delete assigned cases. */}
+                        {/* Only Citizens/Admins can delete. Paralegals cannot. Employees can delete kiosk issues. */}
                         {!isParalegal && (
                             <div className="flex flex-col items-end gap-2 ml-4">
                             <button onClick={() => handleDelete("issues", issue._id)} className="p-1 text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-500 rounded-full transition-colors opacity-0 group-hover:opacity-100"><Trash2 size={16} /></button>
@@ -252,14 +249,14 @@ const DashboardPage = () => {
               <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                   <AlertCircle className="mx-auto mb-4 text-cyan-600 dark:text-cyan-400" size={48} />
                   <p className="font-semibold">{isParalegal ? "No cases assigned yet." : t('dashboardPage.noIssuesTitle')}</p>
-                  <p className="text-sm">{isParalegal ? "Wait for an admin to assign cases to you." : t('dashboardPage.noIssuesSubtitle')}</p>
+                  <p className="text-sm">{isParalegal ? "Wait for an admin to assign cases." : t('dashboardPage.noIssuesSubtitle')}</p>
               </div>
             )}
           </div>
         </motion.div>
 
         {/* --- DOCUMENTS SECTION (Citizens Only) --- */}
-        {!isParalegal && (
+        {(!isParalegal && !isEmployee) && (
             <motion.div variants={itemVariants}>
             <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -315,6 +312,7 @@ const DashboardPage = () => {
       <AddIssueModal isOpen={isAddIssueModalOpen} onClose={() => setAddIssueModalOpen(false)} onSuccess={fetchData} />
       <AddDocumentModal isOpen={isAddDocumentModalOpen} onClose={() => setAddDocumentModalOpen(false)} onSuccess={fetchData} issues={data.issues} />
       <GenerateDocumentModal isOpen={isGenerateModalOpen} onClose={() => setGenerateModalOpen(false)} />
+      <RegisterCitizenModal isOpen={isRegisterCitizenOpen} onClose={() => setRegisterCitizenOpen(false)} onSuccess={fetchData} />
     </>
   )
 }

@@ -21,6 +21,7 @@ import IssueDetailPage from "./pages/IssueDetailPage"
 import DocumentDetailPage from "./pages/DocumentDetailPage"
 import LegalHelpPage from "./pages/legal-help/LegalHelpPage"
 import NotFoundPage from "./pages/NotFoundPage"
+import SubscriptionPage from "./pages/SubscriptionPage"
 
 const ProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -62,7 +63,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/issues/:id" element={<IssueDetailPage />} />
             <Route path="/documents/:id" element={<DocumentDetailPage />} />
-
+            <Route path="/pricing" element={<SubscriptionPage />} />
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={<AdminPanelPage />} />
             </Route>

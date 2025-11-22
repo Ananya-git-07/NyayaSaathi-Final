@@ -9,6 +9,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import verifyJWT from "../middleware/authMiddleware.js"; // Import Auth
 import { generateDocument } from "../controllers/documentGenerator.controller.js"; // Import Generator
+import { verifySubscription } from "../middleware/subscriptionMiddleware.js"; 
 
 const router = Router();
 
@@ -18,8 +19,10 @@ router.use(verifyJWT);
 // === NEW ROUTE: Generate PDF ===
 // POST /api/documents/generate
 // Body: { type: "Affidavit", data: { fullName: "Ram", ... } }
-router.post("/generate", generateDocument);
-
+// === NEW ROUTE: Generate PDF ===
+// POST /api/documents/generate
+// Added verifySubscription middleware
+router.post("/generate", verifySubscription, generateDocument); // <--- UPDATE THIS LINE
 // === EXISTING CREATE: Upload a new document ===
 router.post("/upload", upload.single("documentFile"), async (req, res, next) => {
   let tempFilePath = req.file ? req.file.path : null;

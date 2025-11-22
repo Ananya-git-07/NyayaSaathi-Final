@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { X, FileText, Download, Loader2, AlertCircle } from "lucide-react"
 import toast from "react-hot-toast"
 import apiClient from "../api/axiosConfig"
+import { useNavigate } from "react-router-dom"
 
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -15,6 +16,7 @@ const modalVariants = {
 }
 
 const GenerateDocumentModal = ({ isOpen, onClose }) => {
+  const navigate = useNavigate() // Initialize navigate hook
   const [docType, setDocType] = useState("Affidavit")
   const [formData, setFormData] = useState({
     fullName: "",
@@ -55,13 +57,41 @@ const GenerateDocumentModal = ({ isOpen, onClose }) => {
       link.setAttribute("download", `${docType}_${Date.now()}.pdf`) // Filename
       document.body.appendChild(link)
       link.click()
+      
+      // Cleanup
       link.parentNode.removeChild(link)
+      window.URL.revokeObjectURL(url) 
 
       toast.success("Document generated successfully!", { id: toastId })
       onClose()
     } catch (error) {
-      console.error(error)
-      toast.error("Failed to generate document. Please try again.", { id: toastId })
+      console.error("Generation Error:", error)
+
+      // --- ROBUST ERROR HANDLING FOR BLOBS ---
+      // When responseType is 'blob', the error response is also a blob.
+      // We need to read it to show the actual error message (e.g., "Subscription Required").
+      if (error.response && error.response.data instanceof Blob) {
+          const reader = new FileReader();
+          reader.onload = () => {
+              try {
+                  const errorData = JSON.parse(reader.result);
+                  
+                  // Check for Payment Required (402)
+                  if (error.response.status === 402) {
+                      toast.error("Premium Feature: Please upgrade your plan.", { id: toastId });
+                      onClose();
+                      navigate("/pricing"); // Redirect to pricing
+                  } else {
+                      toast.error(errorData.message || "Failed to generate document.", { id: toastId });
+                  }
+              } catch (e) {
+                  toast.error("An error occurred while generating.", { id: toastId });
+              }
+          };
+          reader.readAsText(error.response.data);
+      } else {
+          toast.error("Network error or server unavailable.", { id: toastId });
+      }
     } finally {
       setIsGenerating(false)
     }

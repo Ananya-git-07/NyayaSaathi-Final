@@ -8,6 +8,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import verifyJWT from '../middleware/authMiddleware.js';
 import { verifyRole } from '../middleware/roleMiddleware.js'; // Import Role Check
+import Employee from '../models/Employee.js';
 
 const router = Router();
 
@@ -54,11 +55,12 @@ router.get('/', async (req, res, next) => {
   try {
     const query = { isDeleted: false };
     
-    // Admins/Employees see all, Citizens see their own, Paralegals see assigned
     if (req.user.role === 'citizen') {
+      // Citizens see only their own
       query.userId = req.user._id;
-    } else if (req.user.role === 'paralegal') {
-        // Find the paralegal profile first
+    } 
+    else if (req.user.role === 'paralegal') {
+        // Paralegals see assigned cases
         const paralegalProfile = await Paralegal.findOne({ user: req.user._id });
         if (paralegalProfile) {
             query.assignedParalegal = paralegalProfile._id;
@@ -66,9 +68,19 @@ router.get('/', async (req, res, next) => {
             return res.status(200).json(new ApiResponse(200, [], "No paralegal profile found."));
         }
     }
+    else if (req.user.role === 'employee') {
+        // Kiosk Employees see ALL issues linked to their Kiosk
+        const employeeProfile = await Employee.findOne({ user: req.user._id });
+        if (employeeProfile && employeeProfile.kioskId) {
+            query.kiosk = employeeProfile.kioskId;
+        } else {
+            return res.status(200).json(new ApiResponse(200, [], "No kiosk assigned to this employee."));
+        }
+    }
+    // Admins see everything (query remains empty)
 
     const issues = await LegalIssue.find(query)
-      .populate('userId', 'fullName email')
+      .populate('userId', 'fullName email aadhaarNumber') // Added Aadhaar for Kiosk verification
       .populate('kiosk', 'location operatorName')
       .populate({
           path: 'assignedParalegal',

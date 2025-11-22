@@ -107,6 +107,10 @@ if (process.env.NODE_ENV !== "production") {
 
 const corsOptions = {
   origin: (origin, callback) => {
+    // Log all incoming origins for debugging
+    console.log(`📡 Request from origin: ${origin || 'no origin (same-origin or tool)'}`);
+    console.log(`✅ Allowed origins:`, allowedOrigins);
+    
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -117,7 +121,9 @@ const corsOptions = {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie']
+  exposedHeaders: ['Set-Cookie'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
@@ -143,6 +149,17 @@ apiRouter.get("/", (req, res) => {
     timestamp: new Date().toISOString(),
     version: "1.0.0",
     environment: process.env.NODE_ENV || 'development',
+  });
+});
+
+// Debug endpoint to check CORS configuration
+apiRouter.get("/debug", (req, res) => {
+  res.json({
+    success: true,
+    allowedOrigins: process.env.CORS_ORIGIN?.split(','),
+    requestOrigin: req.headers.origin,
+    nodeEnv: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
   });
 });
 

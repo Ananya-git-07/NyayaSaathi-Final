@@ -549,49 +549,31 @@ export const getLegalInformation = async (query) => {
 }
 
 // Function to summarize legal documents using AI
+import apiClient from '../api/axiosConfig';
+
 export const summarizeLegalDocument = async (documentText, documentType = null, documentUrl = null, publicId = null, resourceType = null, format = null) => {
   try {
     console.log('Sending summarization request with:', { documentType, documentUrl, publicId, resourceType, format });
     
-    const response = await fetch('/api/ai/summarize-document', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
-      body: JSON.stringify({ documentText, documentType, documentUrl, publicId, resourceType, format }),
+    const response = await apiClient.post('/ai/summarize-document', {
+      documentText, 
+      documentType, 
+      documentUrl, 
+      publicId, 
+      resourceType, 
+      format
     });
-
-    // If response is not OK, parse the JSON error response properly
-    if (!response.ok) {
-      let errorMessage = 'Failed to summarize document';
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorData.error || errorMessage;
-        console.error('API error response:', errorData);
-      } catch (e) {
-        // If can't parse as JSON, try text
-        try {
-          const errorText = await response.text();
-          if (errorText) {
-            errorMessage = errorText;
-          }
-        } catch (e2) {
-          // Use default message
-        }
-      }
-      throw new Error(errorMessage);
-    }
-
-    const data = await response.json();
 
     return {
       success: true,
-      ...data.data,
+      ...response.data.data,
     };
   } catch (error) {
     console.error("Error summarizing document:", error);
-    throw error; // Re-throw instead of returning error object
+    
+    // Extract error message
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to summarize document';
+    throw new Error(errorMessage);
   }
 }
 

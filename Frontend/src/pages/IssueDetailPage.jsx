@@ -13,6 +13,7 @@ import TimelineTracker from "../components/TimelineTracker"
 import ChatWindow from "../components/ChatWindow"
 import AssignParalegalModal from "../components/AssignParalegalModal"
 import EditIssueModal from "../components/EditIssueModal"
+import ConfirmDialog from "../components/ConfirmDialog"
 
 const IssueDetailPage = () => {
   const { id } = useParams()

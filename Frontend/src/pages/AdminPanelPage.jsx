@@ -13,6 +13,7 @@ import AddSubscriptionModal from '../components/AddSubscriptionModal.jsx';
 import GenericEditModal from '../components/GenericEditModal.jsx';
 import AssignParalegalModal from '../components/AssignParalegalModal.jsx';
 import ReviewParalegalRequestModal from '../components/ReviewParalegalRequestModal.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, Filler);
 

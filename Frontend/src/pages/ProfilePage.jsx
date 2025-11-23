@@ -140,10 +140,6 @@ const ProfilePage = () => {
     }
   }
 
-  const handlePasswordChange = (e) => {
-    setPasswords({ ...passwords, [e.target.name]: e.target.value })
-  }
-
   const handleProfileUpdate = async (e) => {
     e.preventDefault()
     setIsSaving(true)

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '../hooks/useConfirm';
 import apiClient from '../api/axiosConfig';
 import Spinner from '../components/Spinner';
 import { Plus, Edit, Users, FileText, Home, Trash2, UserPlus } from 'lucide-react';
@@ -128,6 +129,7 @@ const AdminOverview = () => {
 
 const AdminPanelPage = () => {
   const { t } = useTranslation();
+  const { confirmState, confirm, closeDialog } = useConfirm();
   const [activeTab, setActiveTab] = useState('overview');
   const [editingItem, setEditingItem] = useState(null);
   const [isAddSubModalOpen, setAddSubModalOpen] = useState(false);

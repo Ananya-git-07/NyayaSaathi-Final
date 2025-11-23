@@ -9,6 +9,7 @@ import Spinner from "../components/Spinner"
 import toast from "react-hot-toast"
 import { useTranslation } from "react-i18next"
 import { useAuth } from "../context/AuthContext"
+import { useConfirm } from "../hooks/useConfirm"
 import TimelineTracker from "../components/TimelineTracker"
 import ChatWindow from "../components/ChatWindow"
 import AssignParalegalModal from "../components/AssignParalegalModal"
@@ -20,6 +21,7 @@ const IssueDetailPage = () => {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { user } = useAuth()
+  const { confirmState, confirm, closeDialog } = useConfirm()
   const [issue, setIssue] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")

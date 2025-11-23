@@ -1,5 +1,3 @@
-// PASTE THIS ENTIRE FILE INTO src/pages/AdminPanelPage.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';

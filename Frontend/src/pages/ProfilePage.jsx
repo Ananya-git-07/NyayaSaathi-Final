@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+import { Link } from "react-router-dom" // <--- Added Link import
 import apiClient from "../api/axiosConfig"
 import Spinner from "../components/Spinner"
 import { User, Mail, ShieldCheck, Phone, Edit, Save, X, Loader2, Upload, Trash2 } from "lucide-react"
@@ -133,10 +134,20 @@ const ProfilePage = () => {
               <p className="text-slate-600 dark:text-slate-400 capitalize">{t('profile.accountType', { role: t(`roles.${profile.role}`) })}</p>
             </div>
           </div>
-          <button onClick={() => setIsEditing(!isEditing)} className={isEditing ? 'btn-secondary' : 'btn-primary'}>
-            {isEditing ? <X size={16} /> : <Edit size={16} />}
-            <span>{isEditing ? t('profile.cancel') : t('profile.edit')}</span>
-          </button>
+          
+          <div className="flex gap-2">
+            {/* --- KYC Button --- */}
+            <Link to="/kyc" className="btn-secondary flex items-center gap-2">
+                <ShieldCheck size={16} />
+                <span>Verify ID</span>
+            </Link>
+            
+            <button onClick={() => setIsEditing(!isEditing)} className={isEditing ? 'btn-secondary' : 'btn-primary'}>
+                {isEditing ? <X size={16} /> : <Edit size={16} />}
+                <span>{isEditing ? t('profile.cancel') : t('profile.edit')}</span>
+            </button>
+          </div>
+
         </div>
         
         <form onSubmit={handleProfileUpdate} className="space-y-4">

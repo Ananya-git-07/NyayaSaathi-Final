@@ -1,19 +1,18 @@
-// PASTE THIS ENTIRE FILE INTO src/main.jsx
-
+// src/main.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import App from './App.jsx';
-import './index.css';
+import './index.css'; // <--- ENSURE THIS IS HERE
 import './i18n';
+import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
-import { ThemeProvider } from './context/ThemeContext.jsx'; // Our custom provider
+import { ThemeProvider } from './context/ThemeContext.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <ThemeProvider> {/* This now correctly controls the .dark class */}
+      <ThemeProvider>
         <AuthProvider>
           <Toaster 
             position="top-right"

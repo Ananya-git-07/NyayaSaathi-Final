@@ -34,8 +34,8 @@ const AppLayout = () => {
        THE MAIN FIX: Theme-aware wrapper (bg + text)
        This ensures all pages properly switch light/dark.
     ---------------------------------------------------------------- */
-    <div className="min-h-screen font-sans flex flex-col transition-colors duration-300 bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-300">
 
+    <div className="min-h-screen font-sans flex flex-col transition-colors duration-300 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-300">
       <header className="glass-card sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md">
         <nav className="max-w-7xl mx-auto container-padding">
           <div className="flex items-center justify-between h-16">

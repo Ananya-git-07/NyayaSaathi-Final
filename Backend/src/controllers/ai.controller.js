@@ -184,3 +184,73 @@ You are an expert legal analyst for rural India. Your job is to read complex leg
         throw new ApiError(500, "Failed to summarize document. Ensure the file is readable.");
     }
 });
+
+// ... existing imports and code ...
+
+/**
+ * @route POST /api/ai/verify-identity
+ * @description OCR verification of ID Card against User Profile
+ */
+export const verifyIdentityController = asyncHandler(async (req, res) => {
+    const file = req.file;
+    const user = req.user; // Logged in user
+
+    if (!file) {
+        throw new ApiError(400, "Please upload an ID card image.");
+    }
+
+    const VERIFY_SYSTEM_PROMPT = `
+    ROLE: AI Identity Verification Officer.
+    TASK: Analyze the provided ID Card image and compare it with the User Profile Data below.
+    
+    USER PROFILE DATA:
+    - Name: "${user.fullName}"
+    - Aadhaar (Last 4 digits expected): "${user.aadhaarNumber.slice(-4)}"
+
+    INSTRUCTIONS:
+    1. Extract the Name and Aadhaar/ID Number from the image.
+    2. Compare extracted Name with User Profile Name (Allow minor spelling differences or middle name variations).
+    3. Compare extracted ID Number with User Profile Aadhaar (Check if the number in image ends with the provided last 4 digits).
+    4. Return a strict JSON verdict.
+
+    OUTPUT FORMAT (JSON):
+    {
+      "verified": boolean,
+      "confidence": "High" | "Medium" | "Low",
+      "extractedName": "Name found on card",
+      "extractedID": "ID number found on card",
+      "reason": "Explanation of match or mismatch"
+    }
+    `;
+
+    const model = getGeminiModel(VERIFY_SYSTEM_PROMPT, "application/json");
+
+    // Prepare Image
+    const fileData = fs.readFileSync(file.path);
+    const imagePart = {
+        inlineData: {
+            data: fileData.toString("base64"),
+            mimeType: file.mimetype,
+        },
+    };
+
+    try {
+        const result = await model.generateContent([imagePart, "Verify this ID card."]);
+        const response = result.response;
+        const jsonResponse = JSON.parse(response.text());
+
+        // Cleanup
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+
+        return res.status(200).json(
+            new ApiResponse(200, jsonResponse, "Verification process complete.")
+        );
+
+    } catch (error) {
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        console.error("OCR Error:", error);
+        throw new ApiError(500, "Failed to verify identity.");
+    }
+});
+// Don't forget to export it!
+export { getAIChatResponseController, summarizeDocumentController, verifyIdentityController };

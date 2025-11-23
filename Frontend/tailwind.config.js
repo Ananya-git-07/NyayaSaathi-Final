@@ -4,11 +4,10 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class',
+  darkMode: 'class', // This is correct for your setup
   theme: {
     extend: {
       colors: {
-        // Custom colors for NyayaSaathi
         primary: {
           50: '#ecfeff',
           100: '#cffafe',
@@ -25,6 +24,7 @@ export default {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.5s ease-out',
+        'blob': 'blob 7s infinite', // Missing animation definition used in HomePage
       },
       keyframes: {
         fadeIn: {
@@ -35,6 +35,12 @@ export default {
           '0%': { transform: 'translateY(20px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
+        blob: { // Add this missing keyframe
+          "0%": { transform: "translate(0px, 0px) scale(1)" },
+          "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+          "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+          "100%": { transform: "translate(0px, 0px) scale(1)" }
+        }
       },
     },
   },

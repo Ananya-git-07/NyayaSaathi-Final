@@ -24,14 +24,20 @@ router.post('/request', async (req, res, next) => {
       throw new ApiError(400, "You are already registered as a paralegal");
     }
 
-    // Check if there's already a pending request
+    // Check if there's already a request
     const existingRequest = await ParalegalRequest.findOne({ 
-      user: req.user._id, 
-      status: 'pending',
+      user: req.user._id,
       isDeleted: false 
     });
     if (existingRequest) {
-      throw new ApiError(400, "You already have a pending paralegal request");
+      if (existingRequest.status === 'pending') {
+        throw new ApiError(400, "You already have a pending paralegal request");
+      } else if (existingRequest.status === 'approved') {
+        throw new ApiError(400, "Your paralegal request has already been approved");
+      } else if (existingRequest.status === 'rejected') {
+        // Allow resubmission if previously rejected - delete old request
+        await ParalegalRequest.findByIdAndDelete(existingRequest._id);
+      }
     }
 
     // Validate inputs

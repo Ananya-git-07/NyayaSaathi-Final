@@ -52,16 +52,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     const user = await User.create({ fullName, email, password, aadhaarNumber, role, phoneNumber });
 
     // ---- Role Specific Models ----
-    if (role === "paralegal") {
-        if (!phoneNumber) throw new ApiError(400, "Phone is required for paralegals");
-        if (!areasOfExpertise?.length) throw new ApiError(400, "Areas of expertise required");
-
-        const Paralegal = (await import("../models/Paralegal.js")).default;
-        await Paralegal.create({
-            user: user._id, phoneNumber, areasOfExpertise, active: true, rating: 0, isDeleted: false
-        });
-    }
-
     if (role === "admin") {
         if (!department || !designation)
             throw new ApiError(400, "Department and designation required for admin");

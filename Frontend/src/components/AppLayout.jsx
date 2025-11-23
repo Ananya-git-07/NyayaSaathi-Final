@@ -9,7 +9,7 @@ import LanguageSwitcher from "./LanguageSwitcher"
 import ThemeSwitcher from "./ThemeSwitcher"
 import { Scale, Menu, X } from 'lucide-react'
 import { useState } from "react"
-
+import PWABadge from "./PWABadge"
 const AppLayout = () => {
   const { isAuthenticated, user, logout } = useAuth()
   const { t } = useTranslation()
@@ -137,6 +137,7 @@ const AppLayout = () => {
       </main>
 
       <Footer />
+      <PWABadge />
     </div>
   )
 }

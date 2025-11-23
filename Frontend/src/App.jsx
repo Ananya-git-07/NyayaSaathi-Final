@@ -22,7 +22,7 @@ import DocumentDetailPage from "./pages/DocumentDetailPage"
 import LegalHelpPage from "./pages/legal-help/LegalHelpPage"
 import NotFoundPage from "./pages/NotFoundPage"
 import SubscriptionPage from "./pages/SubscriptionPage"
-
+import ParalegalMarketplacePage from "./pages/ParalegalMarketplacePage"
 const ProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuth()
   if (isLoading)
@@ -63,6 +63,7 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/issues/:id" element={<IssueDetailPage />} />
             <Route path="/documents/:id" element={<DocumentDetailPage />} />
+            <Route path="/find-expert" element={<ParalegalMarketplacePage />}
             <Route path="/pricing" element={<SubscriptionPage />} />
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={<AdminPanelPage />} />

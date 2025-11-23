@@ -16,31 +16,61 @@ const router = Router();
 router.use(verifyJWT);
 
 // === CREATE: Create a new legal issue ===
+// ... imports
+
+// === CREATE: Create a new legal issue ===
 router.post('/', async (req, res, next) => {
   try {
-    const { issueType, description, kioskId, priority } = req.body; // Added priority
+    // Added 'assignedParalegal' to destructuring
+    const { issueType, description, kioskId, priority, assignedParalegal } = req.body; 
+    
     if (!issueType || !description) {
       throw new ApiError(400, "Issue Type and Description are required.");
     }
 
-    // Smart default for details based on simple description
     const formDetails = new Map();
     formDetails.set("initial_summary", description);
 
-    const newIssue = await LegalIssue.create({
+    const issueData = {
       userId: req.user._id,
       issueType,
       description,
-      // If it's a kiosk employee creating it, link the kiosk
-      kiosk: kioskId || (req.user.role === 'employee' ? req.user._id : undefined), 
-      status: 'Pending',
+      kiosk: kioskId || (req.user.role === 'employee' ? req.user._id : undefined),
+      status: assignedParalegal ? 'Escalated' : 'Pending', // Auto-escalate if hiring directly
+      assignedParalegal: assignedParalegal || undefined, // <--- Link the paralegal
       formDetails,
       history: [{
         event: 'Issue Created',
         details: `Issue reported by ${req.user.role}.`,
         actor: req.user.fullName
       }]
-    });
+    };
+
+    // If hiring directly, add history event
+    if (assignedParalegal) {
+        issueData.history.push({
+            event: 'Assigned to Paralegal',
+            details: 'Citizen requested direct help.',
+            actor: req.user.fullName
+        });
+    }
+
+    const newIssue = await LegalIssue.create(issueData);
+
+    // If hiring directly, notify the paralegal
+    if (assignedParalegal) {
+        // Fetch paralegal user ID to notify
+        const paralegalDoc = await Paralegal.findById(assignedParalegal);
+        if (paralegalDoc) {
+             await Notification.create({
+                recipient: paralegalDoc.user,
+                sender: req.user._id,
+                type: 'PARALEGAL_ASSIGNED',
+                message: `New Direct Hire Request: ${issueType}`,
+                link: `/issues/${newIssue._id}`
+            });
+        }
+    }
 
     return res.status(201).json(
       new ApiResponse(201, newIssue, "Legal issue created successfully.")
@@ -50,6 +80,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// ... rest of routes
 // === READ: Get all issues ===
 router.get('/', async (req, res, next) => {
   try {

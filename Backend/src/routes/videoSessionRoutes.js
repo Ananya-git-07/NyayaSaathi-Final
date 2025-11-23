@@ -23,8 +23,8 @@ router.get("/sessions", verifyJWT, asyncHandler(async (req, res) => {
       return res.status(200).json(new ApiResponse(200, [], "No paralegal profile found. Please contact administrator."));
     }
     query.paralegal = paralegalDoc._id;
-  } else if (req.user.role === 'admin' || req.user.role === 'employee') {
-    // Admins and employees can see all sessions
+  } else if (req.user.role === 'admin') {
+    // Admins can see all sessions
     // No filter needed
   } else {
     throw new ApiError(403, "Access denied");

@@ -2,100 +2,35 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useAuth } from "../context/AuthContext"
 import { Link, Navigate } from "react-router-dom"
 import Spinner from "../components/Spinner"
 import { useTranslation } from "react-i18next"
 import {
-  User, Mail, Lock, CreditCard, Users, Building, Phone, Award,
-  Eye, EyeOff, Scale, ArrowRight, Search, AlertCircle,
+  User, Mail, Lock, CreditCard, Phone,
+  Eye, EyeOff, Scale, ArrowRight,
 } from "lucide-react"
-import apiClient from "../api/axiosConfig"
-import toast from "react-hot-toast"
 
 const RegisterPage = () => {
   const { register, isAuthenticated, isLoading } = useAuth()
   const { t } = useTranslation()
   const [formData, setFormData] = useState({
     fullName: "", email: "", password: "", aadhaarNumber: "", role: "citizen",
-    phoneNumber: "", department: "", designation: "", roleLevel: "staff",
-    kioskId: "", areasOfExpertise: [],
+    phoneNumber: "",
   })
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [kiosks, setKiosks] = useState([])
-  const [loadingKiosks, setLoadingKiosks] = useState(false)
-  const [kioskError, setKioskError] = useState(null)
-  const [kioskSearch, setKioskSearch] = useState("")
-  const [filteredKiosks, setFilteredKiosks] = useState([])
 
-  useEffect(() => {
-    if (formData.role === "employee") { fetchKiosks() } 
-    else { setKiosks([]); setFilteredKiosks([]); setKioskError(null) }
-  }, [formData.role])
-
-  useEffect(() => {
-    if (kioskSearch.trim()) {
-      const lowerCaseSearch = kioskSearch.toLowerCase()
-      const filtered = kiosks.filter(k => k.location?.toLowerCase().includes(lowerCaseSearch) || k.village?.toLowerCase().includes(lowerCaseSearch) || k.district?.toLowerCase().includes(lowerCaseSearch) || k.organizationName?.toLowerCase().includes(lowerCaseSearch) || k.organizationType?.toLowerCase().includes(lowerCaseSearch))
-      setFilteredKiosks(filtered)
-    } else { setFilteredKiosks(kiosks) }
-  }, [kioskSearch, kiosks])
-
-  const fetchKiosks = async () => {
-    setLoadingKiosks(true)
-    setKioskError(null)
-    try {
-      const response = await apiClient.get("/kiosks")
-      const activeKiosks = response.data
-      if (!Array.isArray(activeKiosks)) {
-        throw new Error("API returned an unexpected data format.")
-      }
-      if (activeKiosks.length === 0) {
-        setKioskError("No active kiosks are available. Please contact an administrator.")
-        toast.error("No active kiosks found for assignment.")
-      } else {
-        setKiosks(activeKiosks)
-        setFilteredKiosks(activeKiosks)
-      }
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "An unknown error occurred."
-      setKioskError(`Server Error: ${errorMessage}`)
-      toast.error(`Kiosk loading failed: ${errorMessage}`)
-    } finally {
-      setLoadingKiosks(false)
-    }
-  }
-  
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (type === 'checkbox') {
-        setFormData(prevData => {
-            const expertise = prevData.areasOfExpertise || [];
-            if (checked) {
-                return { ...prevData, areasOfExpertise: [...expertise, value] };
-            } else {
-                return { ...prevData, areasOfExpertise: expertise.filter(area => area !== value) };
-            }
-        });
-    } else {
-        setFormData(prevData => ({ ...prevData, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setFormData(prevData => ({ ...prevData, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
-    if (formData.role === "employee" && !formData.kioskId) {
-      toast.error("Kiosk selection is required for employees.")
-      return
-    }
-    if (formData.role === "paralegal" && (!formData.areasOfExpertise || formData.areasOfExpertise.length === 0)) {
-        toast.error("Please select at least one area of expertise.");
-        return;
-    }
     setLoading(true)
     try {
       await register(formData)
@@ -108,127 +43,6 @@ const RegisterPage = () => {
 
   if (isLoading && !isAuthenticated) return <Spinner />
   if (isAuthenticated) return <Navigate to="/dashboard" replace />
-
-  const renderRoleSpecificFields = () => {
-    switch (formData.role) {
-      case "employee":
-        return (
-          <>
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700 pt-6">
-              {t("registerPage.employeeInfoTitle")}
-            </h3>
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("registerPage.kioskLabel")}</label>
-                <div className="relative mb-2">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
-                  <input
-                    type="text"
-                    placeholder={t("registerPage.kioskSearchPlaceholder")}
-                    value={kioskSearch}
-                    onChange={(e) => setKioskSearch(e.target.value)}
-                    className="input-style pl-12"
-                  />
-                </div>
-                {loadingKiosks ? (
-                  <div className="text-center text-slate-500">{t("registerPage.kioskLoading")}</div>
-                ) : kioskError ? (
-                  <div className="text-red-500 text-sm p-3 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center gap-2">
-                    <AlertCircle size={16} />
-                    <span>{kioskError}</span>
-                    <button type="button" onClick={fetchKiosks} className="ml-auto text-xs font-semibold underline">{t("registerPage.kioskRetry")}</button>
-                  </div>
-                ) : (
-                  <select
-                    name="kioskId"
-                    value={formData.kioskId}
-                    onChange={handleChange}
-                    required
-                    className="input-style"
-                    disabled={kiosks.length === 0}
-                  >
-                    <option value="" disabled>
-                      {filteredKiosks.length > 0 ? t("registerPage.kioskSelectDefault") : t("registerPage.kioskNone")}
-                    </option>
-                    {filteredKiosks.map((kiosk) => (
-                      <option key={kiosk._id} value={kiosk._id}>
-                        {kiosk.location} - {kiosk.district}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("registerPage.departmentLabel")}</label>
-                <input name="department" placeholder={t("registerPage.departmentPlaceholder")} value={formData.department} onChange={handleChange} required className="input-style"/>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("registerPage.designationLabel")}</label>
-                <input name="designation" placeholder={t("registerPage.designationPlaceholder")} value={formData.designation} onChange={handleChange} required className="input-style"/>
-              </div>
-              <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("registerPage.roleLevelLabel")}</label>
-                  <div className="flex gap-4">
-                      {Object.keys(t("registerPage.roleLevels", { returnObjects: true })).map((level) => (
-                          <label key={level} className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${formData.roleLevel === level ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-900/50" : "border-slate-300 dark:border-slate-600 hover:border-slate-400"}`}>
-                              <input type="radio" name="roleLevel" value={level} checked={formData.roleLevel === level} onChange={handleChange} className="form-radio text-cyan-600 focus:ring-cyan-500" />
-                              <div>
-                                  <span className="font-medium text-slate-800 dark:text-slate-200">{t(`registerPage.roleLevels.${level}`)}</span>
-                                  <p className="text-xs text-slate-500 dark:text-slate-400">{t(`registerPage.roleLevelDescriptions.${level}`)}</p>
-                              </div>
-                          </label>
-                      ))}
-                  </div>
-              </div>
-            </div>
-          </>
-        )
-      case "paralegal":
-        return (
-            <>
-                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700 pt-6">
-                    {t("registerPage.paralegalInfoTitle")}
-                </h3>
-                <div className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("registerPage.phoneLabel")}</label>
-                        <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
-                            <input name="phoneNumber" placeholder={t("registerPage.phonePlaceholder")} value={formData.phoneNumber} onChange={handleChange} required pattern="\d{10}" title={t("registerPage.phoneError")} className="input-style pl-12"/>
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">{t("registerPage.expertiseLabel")}</label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {Object.keys(t("registerPage.expertiseAreas", { returnObjects: true })).map((area) => (
-                                <label 
-                                    key={area} 
-                                    className={`expertise-checkbox-label ${formData.areasOfExpertise.includes(t(`registerPage.expertiseAreas.${area}`)) ? "expertise-checkbox-label-active" : ""}`}
-                                    style={{ cursor: 'pointer', position: 'relative' }}
-                                    htmlFor={`expertise-${area}`}
-                                >
-                                    <input 
-                                        id={`expertise-${area}`}
-                                        type="checkbox" 
-                                        name="areasOfExpertise" 
-                                        value={t(`registerPage.expertiseAreas.${area}`)} 
-                                        checked={formData.areasOfExpertise.includes(t(`registerPage.expertiseAreas.${area}`))} 
-                                        onChange={handleChange} 
-                                        className="sr-only"
-                                        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
-                                    />
-                                    <span className="text-sm font-medium select-none">{t(`registerPage.expertiseAreas.${area}`)}</span>
-                                </label>
-                            ))}
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{t("registerPage.expertiseHint")}</p>
-                    </div>
-                </div>
-            </>
-        )
-      default: return null
-    }
-  }
 
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
@@ -254,26 +68,7 @@ const RegisterPage = () => {
           {error && <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 p-4 rounded-lg mb-6 text-center">{error}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4">{t("registerPage.selectRole")}</h3>
-              <div className="relative">
-                <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full pl-12 pr-4 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all cursor-pointer"
-                  required
-                >
-                  <option value="citizen">{t('roles.citizen')} - {t('registerPage.roleDescriptions.citizen')}</option>
-                  <option value="employee">{t('roles.employee')} - {t('registerPage.roleDescriptions.employee')}</option>
-                  <option value="paralegal">{t('roles.paralegal')} - {t('registerPage.roleDescriptions.paralegal')}</option>
-                  <option value="admin">{t('roles.admin')} - {t('registerPage.roleDescriptions.admin')}</option>
-                </select>
-              </div>
-            </div>
-            
-            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700 pt-6">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
               {t("registerPage.credentialsTitle")}
             </h3>
             <div className="space-y-6">
@@ -310,9 +105,14 @@ const RegisterPage = () => {
                   <input name="aadhaarNumber" placeholder={t("registerPage.aadhaarPlaceholder")} value={formData.aadhaarNumber} onChange={handleChange} required pattern="\d{12}" title={t("registerPage.aadhaarError")} className="input-style pl-12"/>
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("registerPage.phoneLabel")}</label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+                  <input name="phoneNumber" placeholder={t("registerPage.phonePlaceholder")} value={formData.phoneNumber} onChange={handleChange} pattern="\d{10}" title={t("registerPage.phoneError")} className="input-style pl-12"/>
+                </div>
+              </div>
             </div>
-            
-            {renderRoleSpecificFields()}
 
             <button type="submit" disabled={loading} className="w-full btn-primary text-lg py-4 group mt-8">
               {loading ? (

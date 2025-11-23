@@ -10,8 +10,16 @@ const adminSchema = new mongoose.Schema({
     },
     adminRole: {
         type: String,
-        enum: ['SuperAdmin', 'DistrictAdmin', 'DataEntryOperator', 'KioskAdmin'],
+        enum: ['SuperAdmin', 'DistrictAdmin', 'DataEntryOperator'],
         default: 'DistrictAdmin'
+    },
+    // Employee-related fields (merged from Employee model)
+    department: { type: String },
+    designation: { type: String },
+    roleLevel: { type: String, enum: ['staff', 'manager'], default: 'staff' },
+    permissions: {
+        formProcessing: Boolean,
+        caseEscalation: Boolean
     },
     isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });

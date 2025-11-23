@@ -87,7 +87,7 @@ const KnowledgeBasePage = () => {
   };
 
   const categories = {
-    faqs: ['general', 'legal-process', 'documentation', 'rights', 'kiosk', 'other'],
+    faqs: ['general', 'legal-process', 'documentation', 'rights', 'other'],
     rights: ['fundamental-rights', 'consumer-rights', 'labor-rights', 'women-rights', 'child-rights', 'property-rights', 'other'],
     guides: ['filing-complaint', 'documentation', 'court-process', 'government-schemes', 'legal-aid', 'other']
   };

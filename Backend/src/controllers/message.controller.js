@@ -35,8 +35,8 @@ const getMessagesForIssue = asyncHandler(async (req, res) => {
         }
     }
 
-    // Admins and employees can view all conversations
-    if (userRole === 'admin' || userRole === 'employee') {
+    // Admins can view all conversations
+    if (userRole === 'admin') {
         isAuthorized = true;
     }
 
@@ -89,8 +89,8 @@ const sendMessage = asyncHandler(async (req, res) => {
         }
     }
 
-    // Admins and employees can send messages
-    if (userRole === 'admin' || userRole === 'employee') {
+    // Admins can send messages
+    if (userRole === 'admin') {
         isAuthorized = true;
     }
 

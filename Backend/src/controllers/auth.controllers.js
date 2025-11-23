@@ -38,7 +38,7 @@ const cookieOptions = {
 
 // 1. Register User
 export const registerUser = asyncHandler(async (req, res) => {
-    const { fullName, email, password, aadhaarNumber, role, phoneNumber, department, designation, roleLevel, kioskId, areasOfExpertise } = req.body;
+    const { fullName, email, password, aadhaarNumber, role, phoneNumber, department, designation, roleLevel, areasOfExpertise, adminRole } = req.body;
 
     if (!fullName?.trim() || !email?.trim() || !password?.trim() || !aadhaarNumber?.trim() || !role?.trim()) {
         throw new ApiError(400, "All required fields must be filled");
@@ -62,23 +62,18 @@ export const registerUser = asyncHandler(async (req, res) => {
         });
     }
 
-    if (role === "employee") {
-        if (!department || !designation || !roleLevel || !kioskId)
-            throw new ApiError(400, "All employee details required");
-
-        const Employee = (await import("../models/Employee.js")).default;
-        await Employee.create({
-            user: user._id, kioskId, department, designation, roleLevel, isDeleted: false
-        });
-    }
-
     if (role === "admin") {
-        if (!phoneNumber || !department || !designation)
-            throw new ApiError(400, "All admin details required");
+        if (!department || !designation)
+            throw new ApiError(400, "Department and designation required for admin");
 
         const Admin = (await import("../models/Admin.js")).default;
         await Admin.create({
-            user: user._id, phoneNumber, department, designation, isDeleted: false
+            user: user._id, 
+            department, 
+            designation, 
+            roleLevel: roleLevel || 'staff',
+            adminRole: adminRole || 'DistrictAdmin',
+            isDeleted: false
         });
     }
 

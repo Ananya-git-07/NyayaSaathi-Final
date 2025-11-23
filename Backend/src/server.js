@@ -38,14 +38,13 @@ try {
   // Route imports with individual error handling
   const routeFiles = [
     { name: 'auth', path: './routes/authRoutes.js', public: true },
-    { name: 'kiosks', path: './routes/kioskRoutes.js', public: true },
     { name: 'ai', path: './routes/ai.routes.js' },
     { name: 'admins', path: './routes/adminRoutes.js' },
     { name: 'citizens', path: './routes/citizenRoutes.js' },
     { name: 'documents', path: './routes/documentRoutes.js' },
-    { name: 'employees', path: './routes/employeeRoutes.js' },
     { name: 'issues', path: './routes/legalIssueRoutes.js' },
     { name: 'paralegals', path: './routes/paralegalRoutes.js' },
+    { name: 'paralegal-requests', path: './routes/paralegalRequestRoutes.js' },
     { name: 'subscriptions', path: './routes/subscriptionRoutes.js' },
     { name: 'users', path: './routes/userRoutes.js' },
     { name: 'voicequeries', path: './routes/voiceQueryRoutes.js' },

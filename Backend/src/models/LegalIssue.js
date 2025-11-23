@@ -38,7 +38,6 @@ const legalIssueSchema = new mongoose.Schema({
     enum: ["pending", "in-progress", "resolved", "closed"],
     default: "pending"
   },
-  kiosk: { type: mongoose.Schema.Types.ObjectId, ref: 'Kiosk' },
   assignedParalegal: { type: mongoose.Schema.Types.ObjectId, ref: 'Paralegal' },
   documents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Document' }],
   

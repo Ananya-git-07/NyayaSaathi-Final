@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const subscriptionSchema = new mongoose.Schema({
   organizationType: {
     type: String,
-    enum: ['Kiosk', 'SHG', 'Independent'],
+    enum: ['SHG', 'Independent'],
     required: true
   },
   organizationRef: {

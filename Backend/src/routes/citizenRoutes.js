@@ -16,7 +16,6 @@ router.get('/issues', async (req, res, next) => {
       userId: req.user._id,
       isDeleted: false,
     })
-      .populate("kiosk", "location operatorName")
       .populate("assignedParalegal", "user")
       .sort({ createdAt: -1 })
 

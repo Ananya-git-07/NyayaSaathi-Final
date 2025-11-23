@@ -14,7 +14,7 @@ const faqSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      enum: ['general', 'legal-process', 'documentation', 'rights', 'kiosk', 'other'],
+      enum: ['general', 'legal-process', 'documentation', 'rights', 'other'],
       default: 'general',
     },
     language: {

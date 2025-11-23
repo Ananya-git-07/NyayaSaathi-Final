@@ -9,7 +9,7 @@ const router = Router();
 // === CREATE: Create a new legal issue ===
 router.post('/', async (req, res, next) => {
   try {
-    const { issueType, description, kioskId } = req.body;
+    const { issueType, description } = req.body;
     if (!issueType || !description) {
       throw new ApiError(400, "Issue Type and Description are required.");
     }
@@ -18,7 +18,6 @@ router.post('/', async (req, res, next) => {
       userId: req.user._id,
       issueType,
       description,
-      kiosk: kioskId,
       status: 'pending',
       // --- NEW: Add the first event to the timeline ---
       history: [{
@@ -45,7 +44,6 @@ router.get('/', async (req, res, next) => {
     }
     const issues = await LegalIssue.find(query)
       .populate('userId', 'fullName email')
-      .populate('kiosk', 'location operatorName')
       .populate({
         path: 'assignedParalegal',
         populate: {
@@ -70,7 +68,6 @@ router.get('/:id', async (req, res, next) => {
         // --- NEW: Populate all necessary fields for the detail page ---
         const issue = await LegalIssue.findOne(query)
             .populate('userId', 'fullName email phoneNumber')
-            .populate('kiosk')
             .populate({
                 path: 'assignedParalegal',
                 populate: {
@@ -85,8 +82,8 @@ router.get('/:id', async (req, res, next) => {
         }
 
         // Check access permissions
-        if (req.user.role === 'admin' || req.user.role === 'employee') {
-            // Admin and employees can access all issues
+        if (req.user.role === 'admin') {
+            // Admin can access all issues
             return res.status(200).json(new ApiResponse(200, issue, "Issue retrieved successfully."));
         } else if (req.user.role === 'paralegal') {
             // Paralegals can only access issues assigned to them
@@ -141,7 +138,6 @@ router.put('/:id', async (req, res, next) => {
 
         const updatedIssue = await LegalIssue.findById(id)
             .populate('userId', 'fullName email')
-            .populate('kiosk', 'location')
             .populate({
                 path: 'assignedParalegal',
                 populate: {
@@ -174,8 +170,8 @@ router.put('/:id/status', async (req, res, next) => {
         }
 
         // Check permissions
-        if (req.user.role !== 'admin' && req.user.role !== 'paralegal' && req.user.role !== 'employee') {
-            throw new ApiError(403, "Only admin, paralegal, or employee can update status.");
+        if (req.user.role !== 'admin' && req.user.role !== 'paralegal') {
+            throw new ApiError(403, "Only admin or paralegal can update status.");
         }
 
         const oldStatus = issue.status;
@@ -254,8 +250,8 @@ router.put('/:id/note', async (req, res, next) => {
         }
 
         // Check permissions
-        if (req.user.role !== 'admin' && req.user.role !== 'paralegal' && req.user.role !== 'employee') {
-            throw new ApiError(403, "Only admin, paralegal, or employee can add notes.");
+        if (req.user.role !== 'admin' && req.user.role !== 'paralegal') {
+            throw new ApiError(403, "Only admin or paralegal can add notes.");
         }
 
         issue.history.push({
@@ -287,9 +283,9 @@ router.put('/:id/assign', async (req, res, next) => {
             throw new ApiError(404, "Issue not found.");
         }
 
-        // Check permissions - only admin and employee can assign paralegals
-        if (req.user.role !== 'admin' && req.user.role !== 'employee') {
-            throw new ApiError(403, "Only admin or employee can assign paralegals.");
+        // Check permissions - only admin can assign paralegals
+        if (req.user.role !== 'admin') {
+            throw new ApiError(403, "Only admin can assign paralegals.");
         }
 
         // Verify paralegal exists

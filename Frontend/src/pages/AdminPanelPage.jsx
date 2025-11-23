@@ -9,19 +9,24 @@ import { Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, Filler } from 'chart.js';
 import toast from 'react-hot-toast';
 
-import AddKioskModal from '../components/AddKioskModal.jsx';
 import AddSubscriptionModal from '../components/AddSubscriptionModal.jsx';
 import GenericEditModal from '../components/GenericEditModal.jsx';
 import AssignParalegalModal from '../components/AssignParalegalModal.jsx';
+import ReviewParalegalRequestModal from '../components/ReviewParalegalRequestModal.jsx';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement, Filler);
 
 const columnsConfig = {
     users: [ { header: 'Full Name', accessor: 'fullName' }, { header: 'Email', accessor: 'email' }, { header: 'Role', accessor: 'role' } ],
-    admins: [ { header: 'Name', accessor: (item) => item.user?.fullName || 'N/A' }, { header: 'Email', accessor: (item) => item.user?.email || 'N/A' }, { header: 'Admin Role', accessor: 'adminRole' } ],
-    employees: [ { header: 'Name', accessor: (item) => item.user?.fullName || 'N/A' }, { header: 'Email', accessor: (item) => item.user?.email || 'N/A' }, { header: 'Designation', accessor: 'designation' } ],
+    admins: [ { header: 'Name', accessor: (item) => item.user?.fullName || 'N/A' }, { header: 'Email', accessor: (item) => item.user?.email || 'N/A' }, { header: 'Admin Role', accessor: 'adminRole' }, { header: 'Department', accessor: 'department' } ],
     paralegals: [ { header: 'Name', accessor: (item) => item.user?.fullName || 'N/A' }, { header: 'Email', accessor: (item) => item.user?.email || 'N/A' }, { header: 'Rating', accessor: 'rating' } ],
-    kiosks: [ { header: 'Location', accessor: 'location' }, { header: 'Village', accessor: 'village' }, { header: 'Operator', accessor: 'operatorName' }, { header: 'Active', accessor: (item) => String(item.isActive) } ],
+    'paralegal-requests': [
+        { header: 'Applicant', accessor: (item) => item.user?.fullName || 'N/A' },
+        { header: 'Email', accessor: (item) => item.user?.email || 'N/A' },
+        { header: 'Phone', accessor: 'phoneNumber' },
+        { header: 'Status', accessor: 'status' },
+        { header: 'Submitted', accessor: (item) => new Date(item.createdAt).toLocaleDateString() }
+    ],
     subscriptions: [ { header: 'Org Type', accessor: 'organizationType' }, { header: 'Plan', accessor: 'plan' }, { header: 'Expires On', accessor: (item) => new Date(item.expiryDate).toLocaleDateString() } ],
     issues: [ 
         { header: 'Issue Type', accessor: 'issueType' }, 
@@ -102,10 +107,9 @@ const AdminOverview = () => {
   
     return (
       <div className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <StatCard icon={<Users size={24} />} title={t('adminPage.totalUsers')} value={stats.keyMetrics.totalUsers} color="bg-cyan-100 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400" />
           <StatCard icon={<FileText size={24} />} title={t('adminPage.totalIssues')} value={stats.keyMetrics.totalIssues} color="bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400" />
-          <StatCard icon={<Home size={24} />} title={t('adminPage.totalKiosks')} value={stats.keyMetrics.totalKiosks} color="bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-3 bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
@@ -125,10 +129,10 @@ const AdminPanelPage = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('overview');
   const [editingItem, setEditingItem] = useState(null);
-  const [isAddKioskModalOpen, setAddKioskModalOpen] = useState(false);
   const [isAddSubModalOpen, setAddSubModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [issueToAssign, setIssueToAssign] = useState(null);
+  const [requestToReview, setRequestToReview] = useState(null);
 
   const tabs = ['overview', ...Object.keys(columnsConfig)];
   const tabName = (tab) => {
@@ -136,11 +140,10 @@ const AdminPanelPage = () => {
     const key = tab.replace(/s$/, ''); // Remove plural 's'
     return t(`adminPage.categories.${tab}`, tab.charAt(0).toUpperCase() + tab.slice(1));
   };
-  const canCreate = ['kiosks', 'subscriptions'].includes(activeTab);
-  const canEdit = !['subscriptions', 'voicequeries', 'overview'].includes(activeTab);
+  const canCreate = ['subscriptions'].includes(activeTab);
+  const canEdit = !['subscriptions', 'voicequeries', 'overview', 'paralegal-requests'].includes(activeTab);
 
   const handleCreateClick = () => {
-    if (activeTab === 'kiosks') setAddKioskModalOpen(true);
     if (activeTab === 'subscriptions') setAddSubModalOpen(true);
   };
 
@@ -184,13 +187,13 @@ const AdminPanelPage = () => {
               columns={columnsConfig[activeTab]}
               onEdit={canEdit ? handleEditClick : null}
               onAssign={activeTab === 'issues' ? setIssueToAssign : null}
+              onReview={activeTab === 'paralegal-requests' ? setRequestToReview : null}
               key={activeTab}
             />
           )}
         </div>
       </div>
 
-      <AddKioskModal isOpen={isAddKioskModalOpen} onClose={() => setAddKioskModalOpen(false)} onSuccess={() => forceRerender('kiosks')} />
       <AddSubscriptionModal isOpen={isAddSubModalOpen} onClose={() => setAddSubModalOpen(false)} onSuccess={() => forceRerender('subscriptions')} />
       {editingItem && (
           <GenericEditModal
@@ -215,11 +218,22 @@ const AdminPanelPage = () => {
           }}
         />
       )}
+      {requestToReview && (
+        <ReviewParalegalRequestModal
+          isOpen={true}
+          onClose={() => setRequestToReview(null)}
+          request={requestToReview}
+          onSuccess={() => {
+            setRequestToReview(null);
+            forceRerender('paralegal-requests');
+          }}
+        />
+      )}
     </>
   );
 };
 
-const DataTable = ({ endpoint, title, columns, onEdit, onAssign }) => {
+const DataTable = ({ endpoint, title, columns, onEdit, onAssign, onReview }) => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -295,6 +309,15 @@ const DataTable = ({ endpoint, title, columns, onEdit, onAssign }) => {
                     </td>
                   ))}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-4">
+                    {onReview && (
+                      <button 
+                        onClick={() => onReview(item)} 
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        title="Review Request"
+                      >
+                        <Edit size={14}/>
+                      </button>
+                    )}
                     {onAssign && (
                       <button 
                         onClick={() => onAssign(item)} 
@@ -305,7 +328,7 @@ const DataTable = ({ endpoint, title, columns, onEdit, onAssign }) => {
                       </button>
                     )}
                     {onEdit && <button onClick={() => onEdit(item)} className="text-cyan-600 hover:text-cyan-800 dark:text-cyan-400 dark:hover:text-cyan-300"><Edit size={14}/></button>}
-                    <button onClick={() => handleDelete(item._id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><Trash2 size={14}/></button>
+                    {!onReview && <button onClick={() => handleDelete(item._id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><Trash2 size={14}/></button>}
                   </td>
                 </tr>
               ))}

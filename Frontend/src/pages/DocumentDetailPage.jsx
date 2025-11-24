@@ -22,18 +22,26 @@ const DocumentDetailPage = () => {
   const [summarizing, setSummarizing] = useState(false)
 
   const handleOpenDocument = async (docId) => {
+    const toastId = toast.loading("Loading document...")
     try {
-      // Try to get a signed URL first
-      const response = await apiClient.get(`/documents/${docId}/signed-url`)
-      const signedUrl = response.data.data.signedUrl
-      window.open(signedUrl, '_blank', 'noopener,noreferrer')
+      // Fetch the document with authentication headers
+      const response = await apiClient.get(`/documents/${docId}/download`, {
+        responseType: 'blob'
+      })
+      
+      // Create a blob URL and open it in a new tab
+      const blob = new Blob([response.data], { 
+        type: response.headers['content-type'] || 'application/octet-stream'
+      })
+      const url = window.URL.createObjectURL(blob)
+      window.open(url, '_blank')
+      
+      // Clean up the URL after a delay
+      setTimeout(() => window.URL.revokeObjectURL(url), 100)
+      
+      toast.success("Document opened", { id: toastId })
     } catch (err) {
-      // Fallback to direct URL if signed URL fails
-      if (document?.fileUrl) {
-        window.open(document.fileUrl, '_blank', 'noopener,noreferrer')
-      } else {
-        toast.error('Failed to open document')
-      }
+      toast.error(`Failed to load document: ${err.response?.data?.message || err.message}`, { id: toastId })
     }
   }
 

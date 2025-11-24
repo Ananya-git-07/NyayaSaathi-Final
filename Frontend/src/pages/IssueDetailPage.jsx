@@ -101,6 +101,32 @@ const IssueDetailPage = () => {
     }
   }
 
+  const handleViewDocument = async (docId, docType, format) => {
+    const toastId = toast.loading("Loading document...")
+    try {
+      // Fetch the document with authentication headers
+      const response = await apiClient.get(`/documents/${docId}/download`, {
+        responseType: 'blob'
+      })
+      
+      // Create a blob URL and open it in a new tab
+      const blob = new Blob([response.data], { 
+        type: response.headers['content-type'] || 
+              (format === 'pdf' ? 'application/pdf' : 
+               ['png', 'jpg', 'jpeg'].includes(format) ? `image/${format}` : 'application/octet-stream')
+      })
+      const url = window.URL.createObjectURL(blob)
+      window.open(url, '_blank')
+      
+      // Clean up the URL after a delay
+      setTimeout(() => window.URL.revokeObjectURL(url), 100)
+      
+      toast.success("Document opened", { id: toastId })
+    } catch (err) {
+      toast.error(`Failed to load document: ${err.response?.data?.message || err.message}`, { id: toastId })
+    }
+  }
+
   const canEdit = user && (user.role === 'admin' || issue?.userId?._id === user._id)
 
   const canAssign = user && (user.role === 'admin' || user.role === 'employee')
@@ -311,22 +337,16 @@ const IssueDetailPage = () => {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {issue.documents.map((doc) => {
-                        // Use backend download endpoint to properly serve files with correct content-type
-                        // This ensures PNG files show as PNG, JPEG as JPEG, and PDF as PDF
-                        const viewUrl = `/api/documents/${doc._id}/download`;
-                        
                         // Determine icon based on file format
                         const format = (doc.format || '').toLowerCase();
                         const isImage = ['png', 'jpg', 'jpeg', 'gif'].includes(format);
                         
                         return (
-                          <motion.a 
+                          <motion.button
                             key={doc._id}
-                            href={viewUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            onClick={() => handleViewDocument(doc._id, doc.documentType, format)}
                             whileHover={{ scale: 1.02, y: -2 }}
-                            className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all"
+                            className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all w-full text-left"
                           >
                             <div className="flex items-start gap-3">
                               <div className={`w-10 h-10 rounded-lg ${isImage ? 'bg-gradient-to-br from-blue-500 to-cyan-500' : 'bg-gradient-to-br from-purple-500 to-pink-500'} flex items-center justify-center flex-shrink-0 shadow-md`}>
@@ -340,7 +360,7 @@ const IssueDetailPage = () => {
                                 </p>
                               </div>
                             </div>
-                          </motion.a>
+                          </motion.button>
                         );
                       })}
                     </div>

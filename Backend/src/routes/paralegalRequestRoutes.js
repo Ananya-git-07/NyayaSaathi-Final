@@ -8,6 +8,33 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 
 const router = Router();
 
+// Get all paralegal requests (admin only) - root path for frontend compatibility
+router.get('/', async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') {
+      throw new ApiError(403, "Only admins can view all requests");
+    }
+
+    const { status } = req.query;
+    const query = { isDeleted: false };
+    
+    if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+      query.status = status;
+    }
+
+    const requests = await ParalegalRequest.find(query)
+      .populate('user', 'fullName email aadhaarNumber')
+      .populate('reviewedBy', 'fullName')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json(
+      new ApiResponse(200, requests, "Requests retrieved successfully")
+    );
+  } catch (error) {
+    return next(error);
+  }
+});
+
 // Submit a paralegal request
 router.post('/request', async (req, res, next) => {
   try {
@@ -185,6 +212,99 @@ router.put('/requests/:id', async (req, res, next) => {
 
     return res.status(200).json(
       new ApiResponse(200, updatedRequest, `Request ${status} successfully`)
+    );
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// Update request at root path (for consistency with other resources)
+router.put('/:id', async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') {
+      throw new ApiError(403, "Only admins can review requests");
+    }
+
+    const { id } = req.params;
+    const { status, adminResponse } = req.body;
+
+    if (!['approved', 'rejected'].includes(status)) {
+      throw new ApiError(400, "Status must be either 'approved' or 'rejected'");
+    }
+
+    const request = await ParalegalRequest.findOne({ _id: id, isDeleted: false });
+    if (!request) {
+      throw new ApiError(404, "Request not found");
+    }
+
+    if (request.status !== 'pending') {
+      throw new ApiError(400, "This request has already been reviewed");
+    }
+
+    // Update request
+    request.status = status;
+    request.adminResponse = adminResponse || '';
+    request.reviewedBy = req.user._id;
+    request.reviewedAt = new Date();
+    await request.save();
+
+    // If approved, create paralegal profile and update user role
+    if (status === 'approved') {
+      // Create paralegal profile
+      await Paralegal.create({
+        user: request.user,
+        phoneNumber: request.phoneNumber,
+        areasOfExpertise: request.areasOfExpertise,
+        active: true,
+        rating: 0,
+        isDeleted: false
+      });
+
+      // Update user role
+      await User.findByIdAndUpdate(request.user, { role: 'paralegal' });
+    }
+
+    // Notify the user
+    const notificationMessage = status === 'approved' 
+      ? `Your paralegal request has been approved! You are now a registered paralegal.`
+      : `Your paralegal request has been rejected. ${adminResponse ? 'Reason: ' + adminResponse : ''}`;
+
+    await Notification.create({
+      recipient: request.user,
+      message: notificationMessage,
+      link: `/profile`
+    });
+
+    const updatedRequest = await ParalegalRequest.findById(id)
+      .populate('user', 'fullName email')
+      .populate('reviewedBy', 'fullName');
+
+    return res.status(200).json(
+      new ApiResponse(200, updatedRequest, `Request ${status} successfully`)
+    );
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// Delete paralegal request (admin only) - for consistency with other resources
+router.delete('/:id', async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') {
+      throw new ApiError(403, "Only admins can delete requests");
+    }
+
+    const { id } = req.params;
+    const request = await ParalegalRequest.findById(id);
+    
+    if (!request) {
+      throw new ApiError(404, "Request not found");
+    }
+
+    await ParalegalRequest.findByIdAndDelete(id);
+
+    return res.status(200).json(
+      new ApiResponse(200, null, "Request deleted successfully")
     );
   } catch (error) {
     return next(error);

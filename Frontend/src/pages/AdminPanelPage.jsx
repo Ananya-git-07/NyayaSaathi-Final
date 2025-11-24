@@ -238,6 +238,7 @@ const DataTable = ({ endpoint, title, columns, onEdit, onAssign, onReview }) => 
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const { confirm, confirmState, closeDialog } = useConfirm();
   
     useEffect(() => {
       const fetchData = async () => {

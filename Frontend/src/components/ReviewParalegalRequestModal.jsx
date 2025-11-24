@@ -19,7 +19,7 @@ const ReviewParalegalRequestModal = ({ isOpen, onClose, request, onSuccess }) =>
     const toastId = toast.loading(`${status === 'approved' ? 'Approving' : 'Rejecting'} request...`);
 
     try {
-      const response = await apiClient.put(`/paralegal-requests/requests/${request._id}`, {
+      const response = await apiClient.put(`/paralegal-requests/${request._id}`, {
         status,
         adminResponse: adminResponse.trim()
       });

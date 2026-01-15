@@ -319,6 +319,37 @@ router.put('/:id/assign', async (req, res, next) => {
                 }
             });
 
+        // Send notifications
+        const notificationPromises = [];
+
+        // Notify the paralegal being assigned
+        if (paralegal.user) {
+            notificationPromises.push(
+                Notification.create({
+                    recipient: paralegal.user,
+                    sender: req.user._id,
+                    type: 'PARALEGAL_ASSIGNED',
+                    message: `You have been assigned to issue: ${issue.issueType}`,
+                    link: `/issues/${id}`
+                })
+            );
+        }
+
+        // Notify the citizen who created the issue
+        if (issue.userId && issue.userId._id.toString() !== req.user._id.toString()) {
+            notificationPromises.push(
+                Notification.create({
+                    recipient: issue.userId._id,
+                    sender: req.user._id,
+                    type: 'PARALEGAL_ASSIGNED',
+                    message: `A paralegal (${paralegal.user.fullName}) has been assigned to your issue: ${issue.issueType}`,
+                    link: `/issues/${id}`
+                })
+            );
+        }
+
+        await Promise.all(notificationPromises);
+
         return res.status(200).json(new ApiResponse(200, updatedIssue, "Paralegal assigned successfully."));
     } catch(error) {
         return next(error);

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Document from "../models/Document.js";
 import LegalIssue from "../models/LegalIssue.js";
+import Notification from "../models/Notification.js";
 import { upload, cleanupTempFile } from "../middleware/multer.middleware.js";
 import { uploadOnCloudinary, generateSignedUrl } from "../utils/cloudinary.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -67,6 +68,19 @@ router.post("/upload", upload.single("documentFile"), async (req, res, next) => 
                 }
             }
         });
+
+        // Send notification to assigned paralegal if exists
+        const issue = await LegalIssue.findById(issueId).populate('assignedParalegal');
+        if (issue && issue.assignedParalegal) {
+            const paralegalUserId = issue.assignedParalegal.user || issue.assignedParalegal;
+            await Notification.create({
+                recipient: paralegalUserId,
+                sender: req.user._id,
+                type: 'DOCUMENT_UPLOADED',
+                message: `${req.user.fullName} uploaded a new document (${documentType}) for issue: ${issue.issueType}`,
+                link: `/issues/${issueId}`
+            });
+        }
     }
 
     const populatedDoc = await Document.findById(newDocument._id).populate("userId", "fullName email");
@@ -78,10 +92,18 @@ router.post("/upload", upload.single("documentFile"), async (req, res, next) => 
   }
 });
 
-// === READ: Get all documents for the logged-in user ===
+// === READ: Get all documents for the logged-in user (or all for admin) ===
 router.get("/", async (req, res, next) => {
   try {
-    const documents = await Document.find({ userId: req.user._id, isDeleted: false })
+    let query = { isDeleted: false };
+    
+    // If not admin, only show user's own documents
+    if (req.user.role !== 'admin') {
+      query.userId = req.user._id;
+    }
+    
+    const documents = await Document.find(query)
+      .populate("userId", "fullName email")
       .populate("issueId", "issueType status")
       .sort({ createdAt: -1 });
     return res.status(200).json(new ApiResponse(200, documents, "Documents retrieved successfully."));

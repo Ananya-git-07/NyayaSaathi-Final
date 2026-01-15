@@ -96,12 +96,22 @@ router.get('/', [
 ], async (req, res, next) => {
     try {
         const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
-        const query = { userId: req.user.userId }; // Model middleware handles isDeleted: false
+        
+        // Build query - admins can see all, others only their own
+        const query = req.user.role === 'admin' 
+            ? { isDeleted: false } 
+            : { userId: req.user.userId, isDeleted: false };
+        
         const skip = (parseInt(page) - 1) * parseInt(limit);
         const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
         const [voiceQueries, totalCount] = await Promise.all([
-            VoiceQuery.find(query).sort(sort).skip(skip).limit(parseInt(limit)).lean(),
+            VoiceQuery.find(query)
+                .populate('userId', 'fullName email')
+                .sort(sort)
+                .skip(skip)
+                .limit(parseInt(limit))
+                .lean(),
             VoiceQuery.countDocuments(query)
         ]);
 

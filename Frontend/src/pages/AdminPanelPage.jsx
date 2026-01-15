@@ -31,11 +31,22 @@ const columnsConfig = {
     issues: [ 
         { header: 'Issue Type', accessor: 'issueType' }, 
         { header: 'Status', accessor: 'status' }, 
-        { header: 'User', accessor: 'userId.fullName' },
+        { header: 'User', accessor: (item) => item.userId?.fullName || 'N/A' },
         { header: 'Assigned To', accessor: (item) => item.assignedParalegal?.user?.fullName || 'Unassigned' }
     ],
-    documents: [ { header: 'Doc Type', accessor: 'documentType' }, { header: 'Status', accessor: 'submissionStatus' }, { header: 'User ID', accessor: 'userId' } ],
-    voicequeries: [ { header: 'Language', accessor: 'language' }, { header: 'User ID', accessor: 'userId' }, { header: 'Text', accessor: 'transcribedText' } ],
+    documents: [ 
+        { header: 'Doc Type', accessor: 'documentType' }, 
+        { header: 'Status', accessor: 'submissionStatus' }, 
+        { header: 'User', accessor: (item) => item.userId?.fullName || item.userId?.email || 'N/A' },
+        { header: 'Issue', accessor: (item) => item.issueId?.issueType || 'N/A' },
+        { header: 'Uploaded', accessor: (item) => new Date(item.createdAt).toLocaleDateString() }
+    ],
+    voicequeries: [ 
+        { header: 'Language', accessor: 'language' }, 
+        { header: 'User', accessor: (item) => item.userId?.fullName || item.userId?.email || 'N/A' }, 
+        { header: 'Text', accessor: (item) => (item.transcribedText || 'N/A').substring(0, 50) + (item.transcribedText?.length > 50 ? '...' : '') },
+        { header: 'Date', accessor: (item) => new Date(item.createdAt).toLocaleDateString() }
+    ],
 };
 
 const getNestedValue = (obj, path) => {

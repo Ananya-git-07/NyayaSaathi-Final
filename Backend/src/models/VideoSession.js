@@ -5,6 +5,7 @@ const videoSessionSchema = new mongoose.Schema(
     issueId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'LegalIssue',
+      required: false, // Optional - sessions can be scheduled without specific issue
     },
     citizen: {
       type: mongoose.Schema.Types.ObjectId,

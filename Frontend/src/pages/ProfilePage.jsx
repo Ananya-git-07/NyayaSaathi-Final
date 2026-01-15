@@ -113,6 +113,10 @@ const ProfilePage = () => {
           return { ...prev, areasOfExpertise: expertise.filter(area => area !== value) };
         }
       });
+    } else if (name === 'phoneNumber') {
+      // Only allow digits and limit to 10 characters
+      const cleaned = value.replace(/\D/g, '').slice(0, 10);
+      setRequestForm(prev => ({ ...prev, [name]: cleaned }));
     } else {
       setRequestForm(prev => ({ ...prev, [name]: value }));
     }
@@ -120,9 +124,20 @@ const ProfilePage = () => {
 
   const handleSubmitParalegalRequest = async (e) => {
     e.preventDefault()
-    if (!requestForm.phoneNumber || requestForm.areasOfExpertise.length === 0) {
-      return toast.error("Phone number and at least one area of expertise are required")
+    
+    // Validate phone number
+    if (!requestForm.phoneNumber) {
+      return toast.error("Phone number is required")
     }
+    if (!/^[0-9]{10}$/.test(requestForm.phoneNumber)) {
+      return toast.error("Phone number must be exactly 10 digits")
+    }
+    
+    // Validate areas of expertise
+    if (!requestForm.areasOfExpertise || requestForm.areasOfExpertise.length === 0) {
+      return toast.error("Please select at least one area of expertise")
+    }
+    
     setIsRequestLoading(true)
     const toastId = toast.loading("Submitting request...")
     try {
@@ -134,7 +149,9 @@ const ProfilePage = () => {
         setRequestForm({ phoneNumber: '', areasOfExpertise: [], requestMessage: '' })
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to submit request.", { id: toastId })
+      const errorMsg = err.response?.data?.message || "Failed to submit request."
+      console.error("Paralegal request error:", err.response?.data)
+      toast.error(errorMsg, { id: toastId })
     } finally {
       setIsRequestLoading(false)
     }
@@ -340,15 +357,23 @@ const ProfilePage = () => {
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
                   <input
+                    type="tel"
                     name="phoneNumber"
                     placeholder="Enter your 10-digit phone number"
                     value={requestForm.phoneNumber}
                     onChange={handleRequestFormChange}
                     required
-                    pattern="\d{10}"
+                    maxLength={10}
+                    pattern="[0-9]{10}"
+                    title="Please enter exactly 10 digits"
                     className="input-style pl-12"
                   />
                 </div>
+                {requestForm.phoneNumber && requestForm.phoneNumber.length < 10 && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {10 - requestForm.phoneNumber.length} more digit{10 - requestForm.phoneNumber.length !== 1 ? 's' : ''} required
+                  </p>
+                )}
               </div>
 
               <div>

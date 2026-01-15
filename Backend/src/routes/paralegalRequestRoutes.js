@@ -38,6 +38,12 @@ router.get('/', async (req, res, next) => {
 // Submit a paralegal request
 router.post('/request', async (req, res, next) => {
   try {
+    console.log('📝 Paralegal request received:', {
+      userId: req.user?._id,
+      userName: req.user?.fullName,
+      body: req.body
+    });
+
     const { phoneNumber, areasOfExpertise, requestMessage } = req.body;
 
     // Check if user is a citizen
@@ -72,6 +78,18 @@ router.post('/request', async (req, res, next) => {
       throw new ApiError(400, "Phone number and areas of expertise are required");
     }
 
+    // Validate phone number format
+    if (!/^[0-9]{10}$/.test(phoneNumber)) {
+      throw new ApiError(400, "Phone number must be exactly 10 digits");
+    }
+
+    // Validate areas of expertise
+    const validAreas = ['Aadhaar', 'Pension', 'Land', 'Certificates', 'Fraud', 'Court', 'Welfare'];
+    const invalidAreas = areasOfExpertise.filter(area => !validAreas.includes(area));
+    if (invalidAreas.length > 0) {
+      throw new ApiError(400, `Invalid areas of expertise: ${invalidAreas.join(', ')}`);
+    }
+
     // Create the request
     const request = await ParalegalRequest.create({
       user: req.user._id,
@@ -80,6 +98,8 @@ router.post('/request', async (req, res, next) => {
       requestMessage: requestMessage || '',
       status: 'pending'
     });
+
+    console.log('✅ Paralegal request created successfully:', request._id);
 
     // Notify all admins
     const admins = await User.find({ role: 'admin', isDeleted: false });
@@ -92,10 +112,13 @@ router.post('/request', async (req, res, next) => {
     );
     await Promise.all(notificationPromises);
 
+    console.log(`📧 Sent notifications to ${admins.length} admin(s)`);
+
     return res.status(201).json(
       new ApiResponse(201, request, "Paralegal request submitted successfully")
     );
   } catch (error) {
+    console.error('❌ Error in paralegal request:', error);
     return next(error);
   }
 });

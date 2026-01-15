@@ -9,16 +9,23 @@ const paralegalRequestSchema = new mongoose.Schema({
     },
     phoneNumber: {
         type: String,
-        required: true,
+        required: [true, 'Phone number is required'],
         validate: {
             validator: v => /^[0-9]{10}$/.test(v),
-            message: 'Phone number must be 10 digits.'
+            message: 'Phone number must be exactly 10 digits'
         }
     },
     areasOfExpertise: {
         type: [String],
-        enum: ['Aadhaar', 'Pension', 'Land', 'Certificates', 'Fraud', 'Court', 'Welfare'],
-        required: true
+        enum: {
+            values: ['Aadhaar', 'Pension', 'Land', 'Certificates', 'Fraud', 'Court', 'Welfare'],
+            message: '{VALUE} is not a valid area of expertise'
+        },
+        required: [true, 'At least one area of expertise is required'],
+        validate: {
+            validator: v => Array.isArray(v) && v.length > 0,
+            message: 'At least one area of expertise must be selected'
+        }
     },
     status: {
         type: String,

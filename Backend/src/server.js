@@ -1,259 +1,161 @@
-// PASTE THIS ENTIRE FILE INTO Backend/src/server.js
-
+// ======================= ENV SETUP =======================
 import dotenv from "dotenv";
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-console.log("✅ [DEBUG] Loaded ACCESS_TOKEN_SECRET:", process.env.ACCESS_TOKEN_SECRET);
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
 if (!process.env.ACCESS_TOKEN_SECRET) {
-  console.error("❌ FATAL ERROR: ACCESS_TOKEN_SECRET is not defined! Check your .env file in the /Backend directory.");
+  console.error("❌ ACCESS_TOKEN_SECRET missing in env");
   process.exit(1);
 }
 
+// ======================= IMPORTS =========================
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import http from 'http'; // <-- IMPORT HTTP
-import { initSocket } from './socket.js'; // <-- IMPORT SOCKET INITIALIZER
+import http from "http";
 
+// ======================= DYNAMIC IMPORTS =================
 let connectDB, errorMiddleware, authMiddleware;
 let routeModules = {};
 
-// ... (keep the existing try-catch block for module imports)
 try {
-  // Database and middleware imports
   const dbModule = await import("./config/db.js");
   connectDB = dbModule.connectDB;
-  
+
   const errorModule = await import("./middleware/errorMiddleware.js");
   errorMiddleware = errorModule.errorMiddleware;
-  
+
   const authModule = await import("./middleware/authMiddleware.js");
   authMiddleware = authModule.default;
 
-  // Route imports with individual error handling
   const routeFiles = [
-    { name: 'auth', path: './routes/authRoutes.js', public: true },
-    { name: 'ai', path: './routes/ai.routes.js' },
-    { name: 'admins', path: './routes/adminRoutes.js' },
-    { name: 'citizens', path: './routes/citizenRoutes.js' },
-    { name: 'documents', path: './routes/documentRoutes.js' },
-    { name: 'issues', path: './routes/legalIssueRoutes.js' },
-    { name: 'paralegals', path: './routes/paralegalRoutes.js' },
-    { name: 'paralegal-requests', path: './routes/paralegalRequestRoutes.js' },
-    { name: 'subscriptions', path: './routes/subscriptionRoutes.js' },
-    { name: 'users', path: './routes/userRoutes.js' },
-    { name: 'voicequeries', path: './routes/voiceQueryRoutes.js' },
-    { name: 'messages', path: './routes/messageRoutes.js' },
-    { name: 'notifications', path: './routes/notificationRoutes.js' },
-    { name: 'videosessions', path: './routes/videoSessionRoutes.js' }
+    { name: "auth", path: "./routes/authRoutes.js", public: true },
+    { name: "users", path: "./routes/userRoutes.js" },
+    { name: "admins", path: "./routes/adminRoutes.js" },
+    { name: "citizens", path: "./routes/citizenRoutes.js" },
+    { name: "documents", path: "./routes/documentRoutes.js" },
+    { name: "issues", path: "./routes/legalIssueRoutes.js" },
+    { name: "subscriptions", path: "./routes/subscriptionRoutes.js" },
+    { name: "messages", path: "./routes/messageRoutes.js" },
+    { name: "notifications", path: "./routes/notificationRoutes.js" },
+    { name: "videosessions", path: "./routes/videoSessionRoutes.js" }
   ];
 
   for (const route of routeFiles) {
-    try {
-      const module = await import(route.path);
-      routeModules[route.name] = {
-        handler: module.default,
-        public: route.public || false
-      };
-      console.log(`✅ Loaded ${route.name} routes`);
-    } catch (error) {
-      console.warn(`⚠️ Failed to load ${route.name} routes:`, error.message);
-      // Create a placeholder route that returns 503
-      routeModules[route.name] = {
-        handler: express.Router().get('*', (req, res) => {
-          res.status(503).json({
-            success: false,
-            message: `${route.name} service temporarily unavailable`,
-            error: 'Route module failed to load'
-          });
-        }),
-        public: route.public || false
-      };
-    }
+    const module = await import(route.path);
+    routeModules[route.name] = {
+      handler: module.default,
+      public: route.public || false
+    };
+    console.log(`✅ Loaded route: ${route.name}`);
   }
-
-} catch (error) {
-  console.error("❌ Critical error loading core modules:", error);
+} catch (err) {
+  console.error("❌ Failed to load modules:", err);
   process.exit(1);
 }
-// ... (end of existing try-catch block)
 
-
+// ======================= APP SETUP =======================
 const app = express();
-const httpServer = http.createServer(app); // <-- CREATE HTTP SERVER
-initSocket(httpServer); // <-- INITIALIZE SOCKET.IO
-
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5001;
 
-// ... (keep the existing CORS configuration, middleware, and router setup)
-const allowedOrigins = process.env.CORS_ORIGIN 
-  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-  : ["http://localhost:5173", "http://localhost:3000"];
-
-if (process.env.NODE_ENV !== "production") {
-  const devOrigins = ["http://localhost:5173", "http://localhost:3000"];
-  devOrigins.forEach(origin => {
-    if (!allowedOrigins.includes(origin)) {
-      allowedOrigins.push(origin);
-    }
-  });
-}
+// ======================= CORS ============================
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map(o => o.trim())
+  : ["http://localhost:5173"];
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Log all incoming origins for debugging
-    console.log(`📡 Request from origin: ${origin || 'no origin (same-origin or tool)'}`);
-    console.log(`✅ Allowed origins:`, allowedOrigins);
-    
+  origin: (origin, cb) => {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+      cb(null, true);
     } else {
-      console.warn(`🔒 CORS blocked request from origin: ${origin}`);
-      callback(new Error(`Not allowed by CORS: ${origin}`));
+      cb(new Error("CORS blocked"));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "16mb" }));
-app.use(express.urlencoded({ extended: true, limit: "16mb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-if (process.env.NODE_ENV !== "production") {
-  app.use((req, res, next) => {
-    const timestamp = new Date().toISOString();
-    console.log(`${timestamp} - ${req.method} ${req.path} - ${req.ip}`);
-    next();
-  });
-}
-
-// Add detailed request logging for debugging
-app.use((req, res, next) => {
-  console.log(`🔍 [${req.method}] ${req.path} from ${req.headers.origin || 'no origin'}`);
-  console.log(`   Headers:`, { 
-    auth: req.headers.authorization ? 'present' : 'none',
-    cookie: req.headers.cookie ? 'present' : 'none' 
-  });
-  next();
-});
-
+// ======================= ROUTER ==========================
 const apiRouter = express.Router();
 
+// Health check
 apiRouter.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "NyayaSaathi API is operational",
-    timestamp: new Date().toISOString(),
-    version: "1.0.0",
-    environment: process.env.NODE_ENV || 'development',
+    message: "NyayaSaathi API running",
+    env: process.env.NODE_ENV || "development"
   });
 });
 
-// Debug endpoint to check CORS configuration
+// Debug
 apiRouter.get("/debug", (req, res) => {
   res.json({
-    success: true,
-    allowedOrigins: process.env.CORS_ORIGIN?.split(','),
-    requestOrigin: req.headers.origin,
-    nodeEnv: process.env.NODE_ENV,
-    timestamp: new Date().toISOString()
+    origin: req.headers.origin,
+    allowedOrigins,
+    nodeEnv: process.env.NODE_ENV
   });
 });
 
-console.log("🌐 Setting up public routes...");
+// ======================= PUBLIC ROUTES ===================
 Object.entries(routeModules).forEach(([name, config]) => {
-  if (config.public && config.handler) {
+  if (config.public) {
     apiRouter.use(`/${name}`, config.handler);
-    console.log(`  ✅ Public route: /api/${name} (accessible without auth)`);
+    console.log(`🌐 Public: /api/v1/${name}`);
   }
 });
 
-console.log("\n📋 Route modules loaded:");
+// ======================= PROTECTED ROUTES =================
 Object.entries(routeModules).forEach(([name, config]) => {
-  console.log(`  - ${name}: public=${config.public}`);
-});
-console.log("");
-
-if (authMiddleware) {
-  console.log("🔐 Setting up authentication middleware...");
-  apiRouter.use(authMiddleware);
-} else {
-  console.error("❌ Authentication middleware not available - all routes will be public!");
-}
-
-console.log("🛡️ Setting up protected routes...");
-Object.entries(routeModules).forEach(([name, config]) => {
-  if (!config.public && config.handler) {
-    apiRouter.use(`/${name}`, config.handler);
-    console.log(`  ✅ Protected route: /api/${name}`);
+  if (!config.public) {
+    apiRouter.use(`/${name}`, authMiddleware, config.handler);
+    console.log(`🔒 Protected: /api/v1/${name}`);
   }
 });
 
-app.use("/api", apiRouter);
-// ... (keep the rest of the file: root endpoint, 404 handler, error middleware)
+// ======================= MOUNT ===========================
+app.use("/api/v1", apiRouter);
+
+// Root
 app.get("/", (req, res) => {
-    res.send(`<h1>NyayaSaathi Backend is Running</h1>`);
+  res.send("<h1>NyayaSaathi Backend Running</h1>");
 });
+
+// 404
 app.use("*", (req, res) => {
-  res.status(404).json({ success: false, message: "Endpoint not found" });
+  res.status(404).json({ success: false, message: "Route not found" });
 });
+
+// Error middleware
 if (errorMiddleware) {
   app.use(errorMiddleware);
 }
-// ...
 
-
+// ======================= START SERVER ====================
 const startServer = async () => {
   try {
-    console.log('\n' + '='.repeat(60));
-    console.log('🔧 INITIALIZING NYAYASAATHI BACKEND SERVER');
-    console.log('='.repeat(60));
-
-    if (connectDB) {
-      console.log('🔌 Connecting to MongoDB...');
-      await connectDB();
-      console.log('✅ MongoDB connected successfully');
-    } else {
-      console.warn('⚠️ Database connection function not available');
-    }
-
-    // --- CHANGE: Use httpServer.listen instead of app.listen ---
-    const server = httpServer.listen(PORT, () => {
-      console.log('\n' + '🎉'.repeat(20));
-      console.log('🎉 NYAYASAATHI SERVER STARTED SUCCESSFULLY!');
-      console.log('🎉'.repeat(20));
-      console.log(`📍 Port: ${PORT}`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 Local URL: http://localhost:${PORT}`);
-      console.log(`📊 API URL: http://localhost:${PORT}/api`);
-      console.log('='.repeat(60));
+    await connectDB();
+    server.listen(PORT, () => {
+      console.log("🚀 Server started");
+      console.log(`🌍 PORT: ${PORT}`);
+      console.log(`🔗 API: /api/v1`);
     });
-
-    const gracefulShutdown = (signal) => {
-      console.log(`\n🛑 ${signal} received. Shutting down gracefully...`);
-      server.close(() => {
-        console.log('✅ HTTP server closed');
-        process.exit(0);
-      });
-    };
-
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-  } catch (error) {
-    console.error('❌ FAILED TO START SERVER:', error.message);
+  } catch (err) {
+    console.error("❌ Server failed:", err);
     process.exit(1);
   }
 };

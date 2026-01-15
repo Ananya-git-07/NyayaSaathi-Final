@@ -197,7 +197,7 @@ router.put('/:id/status', async (req, res, next) => {
                     recipient: citizenId,
                     message: `Your issue "${issue.issueType}" status has been updated to "${status}" by ${req.user.fullName}`,
                     link: `/issues/${issue._id}`,
-                    type: 'status_change'
+                    type: 'STATUS_UPDATE'
                 })
             );
         }
@@ -210,7 +210,7 @@ router.put('/:id/status', async (req, res, next) => {
                     recipient: paralegalUserId,
                     message: `Issue "${issue.issueType}" status has been updated to "${status}" by ${req.user.fullName}`,
                     link: `/issues/${issue._id}`,
-                    type: 'status_change'
+                    type: 'STATUS_UPDATE'
                 })
             );
         }

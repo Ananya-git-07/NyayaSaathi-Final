@@ -106,6 +106,7 @@ router.post('/request', async (req, res, next) => {
     const notificationPromises = admins.map(admin => 
       Notification.create({
         recipient: admin._id,
+        type: 'STATUS_UPDATE',
         message: `${req.user.fullName} has requested to become a paralegal`,
         link: `/admin/paralegal-requests`
       })
@@ -225,6 +226,7 @@ router.put('/requests/:id', async (req, res, next) => {
 
     await Notification.create({
       recipient: request.user,
+      type: 'STATUS_UPDATE',
       message: notificationMessage,
       link: `/profile`
     });
@@ -244,6 +246,13 @@ router.put('/requests/:id', async (req, res, next) => {
 // Update request at root path (for consistency with other resources)
 router.put('/:id', async (req, res, next) => {
   try {
+    console.log('📝 Review paralegal request:', {
+      requestId: req.params.id,
+      adminId: req.user?._id,
+      adminName: req.user?.fullName,
+      body: req.body
+    });
+
     if (req.user.role !== 'admin') {
       throw new ApiError(403, "Only admins can review requests");
     }
@@ -273,6 +282,8 @@ router.put('/:id', async (req, res, next) => {
 
     // If approved, create paralegal profile and update user role
     if (status === 'approved') {
+      console.log('✅ Creating paralegal profile for user:', request.user);
+      
       // Create paralegal profile
       await Paralegal.create({
         user: request.user,
@@ -285,6 +296,7 @@ router.put('/:id', async (req, res, next) => {
 
       // Update user role
       await User.findByIdAndUpdate(request.user, { role: 'paralegal' });
+      console.log('✅ User role updated to paralegal');
     }
 
     // Notify the user
@@ -292,8 +304,11 @@ router.put('/:id', async (req, res, next) => {
       ? `Your paralegal request has been approved! You are now a registered paralegal.`
       : `Your paralegal request has been rejected. ${adminResponse ? 'Reason: ' + adminResponse : ''}`;
 
+    console.log('📧 Sending notification to user:', request.user);
+
     await Notification.create({
       recipient: request.user,
+      type: 'STATUS_UPDATE',
       message: notificationMessage,
       link: `/profile`
     });
@@ -302,10 +317,13 @@ router.put('/:id', async (req, res, next) => {
       .populate('user', 'fullName email')
       .populate('reviewedBy', 'fullName');
 
+    console.log(`✅ Request ${status} successfully`);
+
     return res.status(200).json(
       new ApiResponse(200, updatedRequest, `Request ${status} successfully`)
     );
   } catch (error) {
+    console.error('❌ Error reviewing paralegal request:', error);
     return next(error);
   }
 });

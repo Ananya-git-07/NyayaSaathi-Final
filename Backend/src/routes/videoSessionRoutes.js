@@ -159,6 +159,15 @@ router.patch("/sessions/:id/start", verifyJWT, asyncHandler(async (req, res) => 
 router.patch("/sessions/:id/end", verifyJWT, asyncHandler(async (req, res) => {
   const { notes } = req.body;
   
+  // Validate notes if provided
+  if (notes !== undefined && typeof notes !== 'string') {
+    throw new ApiError(400, "Notes must be a string");
+  }
+  
+  if (notes && notes.length > 5000) {
+    throw new ApiError(400, "Notes cannot exceed 5000 characters");
+  }
+  
   const session = await VideoSession.findById(req.params.id);
   
   if (!session) {
@@ -225,6 +234,19 @@ router.patch("/sessions/:id/consent", verifyJWT, asyncHandler(async (req, res) =
 // Save recording URL
 router.patch("/sessions/:id/recording", verifyJWT, asyncHandler(async (req, res) => {
   const { recordingUrl } = req.body;
+  
+  // Validate recording URL
+  if (!recordingUrl || typeof recordingUrl !== 'string') {
+    throw new ApiError(400, "Valid recording URL is required");
+  }
+  
+  if (!recordingUrl.startsWith('http://') && !recordingUrl.startsWith('https://')) {
+    throw new ApiError(400, "Recording URL must be a valid HTTP/HTTPS URL");
+  }
+  
+  if (recordingUrl.length > 2000) {
+    throw new ApiError(400, "Recording URL is too long");
+  }
   
   const session = await VideoSession.findById(req.params.id);
   

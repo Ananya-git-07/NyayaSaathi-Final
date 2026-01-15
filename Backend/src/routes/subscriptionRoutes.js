@@ -7,7 +7,23 @@ const router = Router();
 // Create a new subscription
 router.post('/', async (req, res, next) => {
   try {
-    const subscription = await Subscription.create({ ...req.body, isDeleted: false });
+    // Validate required fields
+    const { organizationRef, planType, startDate, endDate } = req.body;
+    
+    if (!organizationRef || !planType) {
+      const error = new Error('Organization reference and plan type are required');
+      error.status = 400;
+      throw error;
+    }
+    
+    // Whitelist allowed fields to prevent mass assignment
+    const subscription = await Subscription.create({ 
+      organizationRef,
+      planType,
+      startDate,
+      endDate,
+      isDeleted: false 
+    });
     res.status(201).json(subscription);
   } catch (err) {
     next(err);

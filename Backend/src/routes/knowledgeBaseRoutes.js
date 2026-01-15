@@ -67,8 +67,19 @@ router.post("/faqs", verifyJWT, asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only admins can create FAQs");
   }
   
+  // Validate required fields
+  const { question, answer, category, language } = req.body;
+  
+  if (!question || !answer) {
+    throw new ApiError(400, "Question and answer are required");
+  }
+  
+  // Whitelist allowed fields to prevent mass assignment
   const faq = await FAQ.create({
-    ...req.body,
+    question: question.trim(),
+    answer: answer.trim(),
+    category: category || 'General',
+    language: language || 'en',
     createdBy: req.user._id,
   });
   
@@ -81,7 +92,20 @@ router.patch("/faqs/:id", verifyJWT, asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only admins can update FAQs");
   }
   
-  const faq = await FAQ.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  // Whitelist allowed fields to prevent mass assignment
+  const { question, answer, category, language } = req.body;
+  const updateData = {};
+  
+  if (question !== undefined) updateData.question = question.trim();
+  if (answer !== undefined) updateData.answer = answer.trim();
+  if (category !== undefined) updateData.category = category;
+  if (language !== undefined) updateData.language = language;
+  
+  const faq = await FAQ.findByIdAndUpdate(
+    req.params.id, 
+    updateData, 
+    { new: true, runValidators: true }
+  );
   
   if (!faq) {
     throw new ApiError(404, "FAQ not found");
@@ -145,8 +169,20 @@ router.post("/legal-rights", verifyJWT, asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only admins can create legal rights");
   }
   
+  // Validate required fields
+  const { title, description, category, language, applicableLaws } = req.body;
+  
+  if (!title || !description) {
+    throw new ApiError(400, "Title and description are required");
+  }
+  
+  // Whitelist allowed fields to prevent mass assignment
   const right = await LegalRight.create({
-    ...req.body,
+    title: title.trim(),
+    description: description.trim(),
+    category: category || 'General',
+    language: language || 'en',
+    applicableLaws: applicableLaws || [],
     createdBy: req.user._id,
   });
   
@@ -159,7 +195,21 @@ router.patch("/legal-rights/:id", verifyJWT, asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only admins can update legal rights");
   }
   
-  const right = await LegalRight.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  // Whitelist allowed fields to prevent mass assignment
+  const { title, description, category, language, applicableLaws } = req.body;
+  const updateData = {};
+  
+  if (title !== undefined) updateData.title = title.trim();
+  if (description !== undefined) updateData.description = description.trim();
+  if (category !== undefined) updateData.category = category;
+  if (language !== undefined) updateData.language = language;
+  if (applicableLaws !== undefined) updateData.applicableLaws = applicableLaws;
+  
+  const right = await LegalRight.findByIdAndUpdate(
+    req.params.id, 
+    updateData, 
+    { new: true, runValidators: true }
+  );
   
   if (!right) {
     throw new ApiError(404, "Legal right not found");
@@ -244,8 +294,20 @@ router.post("/guides", verifyJWT, asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only admins can create guides");
   }
   
+  // Validate required fields
+  const { title, content, category, language, steps } = req.body;
+  
+  if (!title || !content) {
+    throw new ApiError(400, "Title and content are required");
+  }
+  
+  // Whitelist allowed fields to prevent mass assignment
   const guide = await Guide.create({
-    ...req.body,
+    title: title.trim(),
+    content: content.trim(),
+    category: category || 'General',
+    language: language || 'en',
+    steps: steps || [],
     createdBy: req.user._id,
   });
   
@@ -258,7 +320,21 @@ router.patch("/guides/:id", verifyJWT, asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only admins can update guides");
   }
   
-  const guide = await Guide.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  // Whitelist allowed fields to prevent mass assignment
+  const { title, content, category, language, steps } = req.body;
+  const updateData = {};
+  
+  if (title !== undefined) updateData.title = title.trim();
+  if (content !== undefined) updateData.content = content.trim();
+  if (category !== undefined) updateData.category = category;
+  if (language !== undefined) updateData.language = language;
+  if (steps !== undefined) updateData.steps = steps;
+  
+  const guide = await Guide.findByIdAndUpdate(
+    req.params.id, 
+    updateData, 
+    { new: true, runValidators: true }
+  );
   
   if (!guide) {
     throw new ApiError(404, "Guide not found");

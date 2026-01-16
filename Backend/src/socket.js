@@ -12,7 +12,10 @@ const initSocket = (httpServer) => {
         ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
         : ["http://localhost:5173", "http://localhost:3000"];
 
+    console.log('🔌 Initializing Socket.IO with allowed origins:', allowedOrigins);
+
     const io = new Server(httpServer, {
+        path: '/socket.io',
         cors: {
             origin: (origin, callback) => {
                 // Allow requests with no origin (like mobile apps or curl requests)
@@ -27,7 +30,11 @@ const initSocket = (httpServer) => {
             },
             methods: ["GET", "POST"],
             credentials: true
-        }
+        },
+        transports: ['websocket', 'polling'],
+        allowEIO3: true,
+        pingTimeout: 60000,
+        pingInterval: 25000
     });
 
     io.on("connection", (socket) => {

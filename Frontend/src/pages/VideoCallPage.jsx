@@ -221,9 +221,10 @@ const VideoCallPage = () => {
       return;
     }
     
-    // Extract base URL without /api suffix
+    // Extract base URL without /api suffix - handle both forward and backslash
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-    const socketUrl = apiUrl.replace('/api', '');
+    // Remove both /api and \api suffixes, normalize slashes
+    const socketUrl = apiUrl.replace(/[\\/]api$/i, '').replace(/\\/g, '/');
     
     console.log('Initializing socket to:', socketUrl);
     

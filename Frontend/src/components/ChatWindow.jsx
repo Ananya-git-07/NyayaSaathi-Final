@@ -57,7 +57,9 @@ const ChatWindow = ({ issueId, currentUser, paralegalInfo }) => {
     // Initialize socket connection only after we have the conversationId
     if (!conversationId && messages.length === 0) return;
 
-    const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+    // Extract base URL without /api suffix - handle both forward and backslash
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+    const socketUrl = apiUrl.replace(/[\\/]api$/i, '').replace(/\\/g, '/');
     const newSocket = io(socketUrl, {
       auth: { token: localStorage.getItem('token') }
     });

@@ -146,30 +146,6 @@ const HomePage = () => {
         ) : (
           <>
             <PublicHero />
-            <section className="py-16 px-4 bg-secondary">
-              <div className="max-w-4xl mx-auto text-center">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                  className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/30 dark:to-indigo-900/30 p-8 rounded-xl border border-purple-200 dark:border-purple-800"
-                >
-                  <Scale className="mx-auto mb-4 text-purple-600 dark:text-purple-400" size={48} />
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{t("homePage.ctaLegalHelpTitle")}</h2>
-                  <p className="text-slate-700 dark:text-slate-400 mb-6">
-                    {t("homePage.ctaLegalHelpDesc")}
-                  </p>
-                  <button
-                    onClick={() => navigate("/legal-help")}
-                    className="btn-primary inline-flex items-center gap-2"
-                  >
-                    <BookOpen size={20} />
-                    {t("homePage.ctaAccessLegalHelp")}
-                    <ArrowRight size={20} />
-                  </button>
-                </motion.div>
-              </div>
-            </section>
           </>
         )}
 

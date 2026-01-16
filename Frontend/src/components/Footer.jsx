@@ -35,11 +35,11 @@ const Footer = () => {
                     {t("nav.home")}
                   </Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link to="/legal-help" className="text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
                     {t("nav.legalHelp")}
                   </Link>
-                </li>
+                </li> */}
                 <li>
                   <Link to="/register" className="text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
                     {t("nav.register")}

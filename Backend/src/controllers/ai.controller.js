@@ -1,6 +1,5 @@
 // PASTE THIS ENTIRE FILE INTO Backend/src/controllers/ai.controller.js
 
-// src/controllers/ai.controller.js
 
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { asyncHandler } from "../utils/asyncHandler.js";
